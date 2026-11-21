@@ -579,6 +579,7 @@ body{ background:linear-gradient(180deg,#141c47,#1d2b64 40%,#f6f7fb 40%); }
 .gm-b{ position:absolute; max-width:46%; padding:10px 12px; border:none; border-radius:999px; font-weight:800; font-size:.95rem; color:#fff; background:radial-gradient(circle at 30% 25%,#ffb48a,#ff5a7a 70%); box-shadow:0 6px 14px rgba(255,80,100,.4); animation:gmFloat 2.5s ease-in-out infinite alternate; line-height:1.2; } .gm-b:nth-child(3n+2){ background:radial-gradient(circle at 30% 25%,#9fb0ff,#4d5fe0 70%); box-shadow:0 6px 14px rgba(77,95,224,.4);} .gm-b:nth-child(3n){ background:radial-gradient(circle at 30% 25%,#8be6c0,#1fa971 70%); box-shadow:0 6px 14px rgba(31,169,113,.4);}
 @keyframes gmFloat{ from{ transform:translateY(0);} to{ transform:translateY(14px);} } .gm-b.shake{ animation:gmShake .35s; } @keyframes gmShake{ 0%,100%{ transform:translateX(0);} 25%{ transform:translateX(-8px);} 75%{ transform:translateX(8px);} } .gm-win{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:4rem; }
 .lv-row{ display:flex; gap:8px; margin-top:12px; } .lv-pill{ flex:1; background:#eef0ff; border-radius:12px; padding:8px; text-align:center; font-size:.8rem; color:var(--navy); } .lv-pill b{ display:block; } .lv-pill.lock{ opacity:.55; } .les-card.locked{ opacity:.5; }
+.lx{ margin:-4px 4px 10px; } .lx summary{ cursor:pointer; font-size:.82rem; font-weight:700; color:var(--navy); padding:6px 4px; } .lx-s{ background:#fff8ef; border:1px solid #ffd9b8; border-radius:12px; padding:10px; margin:6px 0; } .lx-en{ font-weight:700; color:var(--navy); margin-bottom:4px; } .lx-f{ font-weight:700; margin:4px 0; } .lx-y,.lx-r{ font-size:.9rem; margin:4px 0; } .lx-r{ background:#fff; border-left:4px solid #e0541f; padding:6px 8px; border-radius:6px; } .lx-k{ font-size:.7rem; letter-spacing:.06em; color:#e0541f; font-weight:800; margin-top:8px; }
 .les-grp{ font-weight:800; color:var(--stamp); margin:16px 2px 8px; font-size:.95rem; } .remind-bar{ background:#eef0ff; color:var(--navy); border-radius:14px; padding:10px 12px; margin:0 0 10px; font-size:.9rem; cursor:pointer; } .remind-bar.due{ background:#ff7a45; color:#fff; font-weight:600; } .remind-bar.ok{ background:#e3f7ee; color:#0f6b46; }
 .les-card{ display:flex; align-items:center; gap:12px; width:100%; text-align:left; background:#fff; border:1px solid var(--line); border-radius:18px; padding:12px; margin-bottom:10px; box-shadow:0 4px 14px rgba(40,50,110,.07); }
 .les-card.done{ border-color:var(--green); } .les-ic{ font-size:1.8rem; width:46px; height:46px; display:flex; align-items:center; justify-content:center; background:var(--cream-2); border-radius:14px; flex:none; }
@@ -3958,11 +3959,93 @@ function renderGameDone(){
   <button class="btn-primary" onclick="startGame()">Chơi lại</button><button class="btn-secondary" onclick="goHome()">Về trang chủ</button></div>`;
 }
 
+/* ============ GIẢI THÍCH TỪNG CÂU (khuôn · vì sao · nói khác · ví dụ nữa) ============ */
+const SENT_RULES = [
+ [/^what if\b/i,"What if + [chuyện xấu xảy ra]?","Khách hỏi 'nếu… thì sao?' để chắc là bạn có phương án dự phòng. Sau 'if' dùng thì hiện tại, KHÔNG dùng will.","Lo xa → What if + câu hiện tại.",[["What happens if [something breaks]?","Chuyện gì xảy ra nếu…?"]],[["What if it rains?","Nếu trời mưa thì sao?"],["What if the screen breaks?","Nếu màn hình hỏng thì sao?"]]],
+ [/^what about\b/i,"What about + [danh từ]?","Chuyển sang ý kế tiếp: 'còn … thì sao?'. Rất hay dùng để dẫn khách qua từng hạng mục.","Hết ý này → What about + ý kế.",[["How about [the lighting]?","Còn … thì sao?"]],[["What about the lighting?","Còn ánh sáng thì sao?"],["What about parking?","Còn chỗ đậu xe thì sao?"]]],
+ [/^how (long|many|much|big|tall|far|often)\b/i,"How + long / many / much / big + do/does/will + chủ ngữ + V?","'How' + tính từ để hỏi MỨC ĐỘ: long = bao lâu, many = bao nhiêu (đếm được), much = bao nhiêu (tiền/không đếm), big = to cỡ nào. Sau đó là câu hỏi bình thường.","How + tính từ = hỏi mức độ; phần sau theo khuôn do/does/will + chủ ngữ + V.",[["What is the [size / price / schedule]?","… là bao nhiêu / thế nào?"]],[["How long does the setup take?","Dựng mất bao lâu?"],["How many people will come?","Bao nhiêu người sẽ đến?"],["How much is the power supply?","Nguồn điện giá bao nhiêu?"]]],
+ [/^(what|which|where|when|who|whose|why|how)\b/i,"[Từ hỏi] + do/does/is/are/can/will + chủ ngữ + V?","Từ hỏi đứng đầu câu, rồi trợ động từ đảo lên TRƯỚC chủ ngữ (khác với câu kể).","Từ hỏi → trợ động từ → chủ ngữ → động từ. Ví dụ: When + can + we + see…?",[["Could you tell me [when we can see it]?","Bạn cho tôi biết … được không? (lịch sự hơn, phần sau về lại thứ tự câu kể)"]],[["When can we start?","Khi nào chúng ta bắt đầu được?"],["Where should I sign?","Tôi nên ký ở đâu?"],["What time suits you?","Mấy giờ hợp với bạn?"]]],
+ [/^could (i|you|we)\b/i,"Could + I / you + V gốc …?","'Could' = 'Can' nhưng lịch sự hơn. Dùng khi nhờ người khác (Could you…) hoặc xin phép (Could I…). Động từ sau đó để nguyên, không thêm to/-s.","Nhờ → Could you + V. Xin phép → Could I + V.",[["Can you [send me the address]?","Nhanh, thân mật hơn"],["Would you mind [sending] me…?","Rất lịch sự (mind + V-ing)"]],[["Could you send me the drawing?","Bạn gửi tôi bản vẽ được không?"],["Could I see your badge, please?","Cho tôi xem thẻ của bạn được không?"]]],
+ [/^can (you|i|we)\b/i,"Can + you / I / we + V gốc …?","Hỏi khả năng hoặc nhờ nhanh gọn. Thân mật hơn 'Could'. Động từ sau 'can' luôn để nguyên.","Can + chủ ngữ + V gốc (không to, không -s).",[["Could you [fix it today]?","Lịch sự hơn"],["Is it possible to [fix it today]?","Có thể … được không?"]],[["Can you fix it today?","Bạn sửa hôm nay được không?"],["Can we move the counter?","Dời quầy được không?"]]],
+ [/^may i\b/i,"May I + V gốc …?","Xin phép rất lịch sự, hợp khi nói với khách lớn tuổi hoặc người lạ.","Xin phép lịch sự → May I + V.",[["Could I [ask a question]?","Lịch sự, đời thường hơn"]],[["May I take a photo?","Tôi chụp ảnh được không?"],["May I ask your budget?","Tôi hỏi ngân sách được không?"]]],
+ [/^(do|does|did)\b.*\?$/i,"Do / Does + chủ ngữ + V gốc …?","Hỏi có/không về thói quen hoặc sự thật. Do/Does đã 'gánh' việc chia thì nên động từ chính để NGUYÊN (Does it include, không phải Does it includes).","Do/Does đứng đầu → động từ chính để nguyên.",[["Are you [open on Sunday]? (khi dùng be)","Dùng Are/Is khi không có động từ thường"]],[["Do you offer maintenance?","Bạn có bảo trì không?"],["Does it include installation?","Giá đã gồm lắp đặt chưa?"]]],
+ [/^(is|are)\b.*\?$/i,"Is / Are + chủ ngữ + tính từ / danh từ / V-ing …?","Hỏi tình trạng. Đảo Is/Are lên đầu câu. Is cho số ít, Are cho số nhiều.","Câu hỏi = đảo be lên đầu.",[["Is it possible to…?","Có thể … không?"]],[["Is the stage ready?","Sân khấu xong chưa?"],["Are you free on Monday?","Thứ Hai bạn rảnh không?"]]],
+ [/^(will|should|would|shall)\b.*\?$/i,"Will / Should + chủ ngữ + V gốc …?","Will hỏi chuyện sẽ xảy ra, Should hỏi 'có nên / có cần không'. Động từ sau đó để nguyên.","Will = sắp xảy ra. Should = nên/cần.",[["Do I need to [transfer today]?","Tôi có cần … không?"]],[["Will it change the price?","Nó có đổi giá không?"],["Should I transfer today?","Tôi có nên chuyển khoản hôm nay không?"]]],
+ [/^(i|we)('ll| will)\b/i,"I will + V gốc + [mốc thời gian]","Hứa hoặc quyết định làm. Luôn kèm mốc thời gian (today, by Friday, within one week) để khách tin và dễ theo dõi.","Hứa = I will + việc + mốc thời gian.",[["I'll [send it today]. (nói tắt, tự nhiên hơn)","Tôi sẽ …"],["I can [send it today].","Ít cam kết hơn will"]],[["I will send the drawing by Friday.","Tôi sẽ gửi bản vẽ trước thứ Sáu."],["We will finish before 8 p.m.","Chúng tôi sẽ xong trước 8 giờ tối."]]],
+ [/^i'?m afraid\b/i,"I'm afraid + [tin xấu]","Mở đầu nhẹ nhàng khi báo tin không tốt. 'Afraid' làm câu mềm đi, khách đỡ khó chịu hơn so với nói thẳng.","Tin xấu → mở bằng I'm afraid.",[["Unfortunately, [we have a delay].","Rất tiếc là…"],["There is a small problem.","Có một vấn đề nhỏ."]],[["I'm afraid the price is fixed.","Tôi e là giá này cố định."],["I'm afraid we are fully booked.","Tôi e là bên mình kín lịch rồi."]]],
+ [/^i'?m (very |so |really )?sorry\b/i,"I'm sorry + about [chuyện] / for [chuyện] / to hear [tin xấu]","Xin lỗi trước, rồi đưa GIẢI PHÁP ngay (I will… / We will…). Khách cần thấy bạn xử lý, không chỉ xin lỗi.","Sorry → rồi giải pháp.",[["I apologize for the delay.","Trang trọng hơn"],["Sorry for the trouble.","Ngắn, thân mật"]],[["I'm sorry about the delay.","Xin lỗi về sự chậm trễ."],["I'm sorry to hear that.","Tôi rất tiếc khi nghe vậy."]]],
+ [/^(thank you|thanks)\b.*\bfor\b/i,"Thank you for + V-ing / danh từ","Sau 'for' là việc người ta vừa làm. Nếu là động từ thì thêm -ing (for coming, for telling).","Cảm ơn VỀ việc gì → for + V-ing / danh từ.",[["I appreciate your [feedback].","Tôi trân trọng …"],["Thanks a lot for [coming].","Cảm ơn nhiều vì…"]],[["Thank you for waiting.","Cảm ơn đã chờ."],["Thank you for visiting our booth.","Cảm ơn đã ghé gian hàng."]]],
+ [/^(thank you|thanks)\b/i,"Thank you! + [câu chính]","Cảm ơn trước rồi mới vào việc chính. Khách thấy được tôn trọng, cuộc nói chuyện êm hơn.","Mở bằng Thank you, vào việc sau.",[["Thanks so much.","Cảm ơn nhiều."],["I appreciate it.","Tôi rất cảm kích."]],[["Thank you. Here is the quotation.","Cảm ơn. Đây là báo giá."],["Thanks. Let me check.","Cảm ơn. Để tôi kiểm tra."]]],
+ [/^please\b/i,"Please + V gốc …","Thêm 'Please' vào câu lệnh để thành lời yêu cầu lịch sự. Động từ để nguyên.","Please + động từ gốc.",[["Could you please [confirm by Friday]?","Mềm hơn"],["Would you mind [confirming]…?","Rất lịch sự"]],[["Please wear a helmet.","Vui lòng đội mũ bảo hộ."],["Please confirm by Friday.","Vui lòng xác nhận trước thứ Sáu."]]],
+ [/^let me\b/i,"Let me + V gốc …","'Để tôi…' — nói trước khi làm gì đó cho khách. Nghe chủ động và thân thiện. Động từ để nguyên.","Let me + V gốc.",[["I'll [check].","Tôi sẽ …"],["Allow me to [show you].","Trang trọng"]],[["Let me check.","Để tôi kiểm tra."],["Let me show you the drawing.","Để tôi cho bạn xem bản vẽ."]]],
+ [/^let'?s\b/i,"Let's + V gốc …","'Chúng ta hãy…' — rủ cùng làm hoặc chốt kế hoạch chung.","Let's + V gốc.",[["Shall we [check again on Friday]?","Mình … nhé?"]],[["Let's start.","Bắt đầu thôi."],["Let's confirm on Monday.","Mình chốt vào thứ Hai nhé."]]],
+ [/^just to confirm|^let me repeat/i,"Just to confirm, + [nhắc lại ý khách]. Is that right?","Nhắc lại để hai bên hiểu giống nhau, tránh làm sai. Kết bằng 'Is that right?' để khách xác nhận.","Nhắc lại + Is that right?",[["So you want [a warm office], correct?","Vậy bạn muốn…, đúng không?"],["Let me make sure I understand.","Để tôi chắc là mình hiểu đúng."]],[["Just to confirm, the opening is on Monday. Is that right?","Xác nhận lại, khai trương thứ Hai, đúng không?"]]],
+ [/^i (would like|'d like)\b|^i'?d like\b/i,"I would like to + V gốc …","Nói điều mình muốn một cách lịch sự. 'would like' lịch sự hơn 'want'.","Muốn (lịch sự) = I would like to + V.",[["I'd like to [set up a meeting]. (nói tắt)","Tôi muốn…"],["I want to [set up a meeting].","Thẳng hơn"]],[["I would like to set up a meeting.","Tôi muốn hẹn một buổi gặp."],["I would like to confirm the price.","Tôi muốn xác nhận giá."]]],
+ [/^(we|i) (want|need)\b/i,"We want / need + to + V  |  We want + [người] + to + V","'want' = muốn, 'need' = cần. Có thể nói muốn AI làm gì: want + người + to + V.","want/need + to + V.",[["We would like to [open in May].","Lịch sự hơn"],["We are looking for [a new office].","Chúng tôi đang tìm…"]],[["We want to open in May.","Chúng tôi muốn khai trương tháng Năm."],["We need five kilowatts.","Chúng tôi cần 5 kW."]]],
+ [/^(then )?i (suggest|recommend)\b/i,"I suggest / recommend + [danh từ]","Đề xuất của người chuyên gia. 'Then' nối với điều khách vừa nói: 'vậy thì…'.","Khách nêu nhu cầu → Then I recommend + giải pháp.",[["How about [warm lighting]?","Hay là… thì sao?"],["You could [use natural wood].","Bạn có thể…"]],[["I recommend a wider entrance.","Tôi đề xuất lối vào rộng hơn."],["Then I suggest a photo area.","Vậy tôi đề xuất khu chụp ảnh."]]],
+ [/^then (we|i)\b/i,"Then + we / I + could / will + V gốc …","'Then' = 'vậy thì', nối với điều khách vừa nói để đưa phương án.","Khách phản đối → Then we could + phương án.",[["In that case, we could…","Trong trường hợp đó…"]],[["Then we could change the material.","Vậy ta có thể đổi vật liệu."]]],
+ [/^(i|we) (can|could)\b/i,"I / We can + V gốc …","Nói mình làm được gì. Hay dùng để đưa phương án cho khách. 'could' là bản mềm hơn.","Đưa giải pháp = I can + V.",[["We are able to…","Trang trọng"],["It's possible to…","Có thể …"]],[["I can make it wider.","Tôi có thể làm rộng hơn."],["We can deliver on Friday.","Chúng tôi giao được vào thứ Sáu."]]],
+ [/^(it|that) depends\b/i,"It depends on + [yếu tố]","Khi chưa trả lời chắc được (giá, thời gian) vì còn phụ thuộc yếu tố khác. Phải đi với 'ON'.","depend + ON (không dùng in/at).",[["That depends on [the size].","Còn tùy vào…"]],[["It depends on the material.","Tùy vào vật liệu."],["It depends on the budget.","Tùy vào ngân sách."]]],
+ [/^i (noticed|looked at|checked)\b/i,"I noticed / looked at / checked + [điều gì đó]","Nói bạn đã nhìn/kiểm tra và thấy gì. Dùng quá khứ (đã xảy ra xong) để mở đầu góp ý nhẹ nhàng.","Quá khứ đơn: V-ed. Mở đầu góp ý bằng 'I noticed…'.",[["I saw that…","Tôi thấy là…"]],[["I noticed the logo is too small.","Tôi để ý logo hơi nhỏ."],["I checked the drawing.","Tôi đã kiểm tra bản vẽ."]]],
+ [/^i have read\b|^i('ve| have) (checked|received|sent)\b/i,"I have + V3 (đã làm xong)","Present perfect = 'đã làm xong và kết quả còn liên quan bây giờ'. Có 'have' + động từ cột 3.","Đã làm xong, còn liên quan → have + V3.",[["I read it.","Tôi đã đọc (chỉ kể chuyện quá khứ)"]],[["I have read the contract.","Tôi đã đọc hợp đồng."],["I have sent the drawing.","Tôi đã gửi bản vẽ."]]],
+ [/\btoo \w+/i,"[Chủ ngữ] + is / are + too + tính từ","'too' = QUÁ mức cần, mang ý chê/phàn nàn. Muốn khen thì dùng 'very'.","too + tính từ = quá … (không tốt).",[["very + tính từ","rất … (khen)"],["a bit + tính từ","hơi … (nhẹ hơn)"]],[["The price is too high.","Giá cao quá."],["The stage is too small.","Sân khấu nhỏ quá."]]],
+ [/\b(darker|wider|warmer|brighter|cheaper|bigger|smaller|lighter|different)\b.*\b(than|from)\b|\b(darker|wider|warmer|brighter)\b/i,"A + is + tính từ-er + than + B","So sánh hai thứ. Tính từ ngắn thêm -er, theo sau là 'than'. 'different' đi với FROM.","Ngắn → -er + than. Dài → more + adj + than.",[["more + tính từ dài + than","dùng cho tính từ dài"]],[["The color is darker than the sample.","Màu đậm hơn mẫu."],["This wall is wider than that one.","Tường này rộng hơn tường kia."]]],
+ [/\bif\b/i,"[Kết quả] + if + [điều kiện]","Câu điều kiện: if + hiện tại, kết quả dùng will / can. Đặt 'if' sau cũng được, nghĩa không đổi.","if + hiện tại → will/can + V.",[["Provided that…","Với điều kiện là… (trang trọng)"]],[["We can finish on time if you confirm today.","Ta xong đúng hạn nếu bạn chốt hôm nay."]]],
+ [/^(we|you|they|i|all materials|trucks|anything)\b.*\b(must|need to|needs to|should)\b/i,"[Chủ ngữ] + must / need to / should + V gốc","must = bắt buộc (quy định). need to = cần phải. should = nên. Động từ sau must/should để nguyên.","Quy định → must + V. Cần làm → need to + V.",[["You have to [book it in advance].","Phải … (đời thường)"]],[["You must wear a badge.","Bạn phải đeo thẻ."],["You need to book it in advance.","Bạn cần đặt trước."]]],
+ [/this is \w+( \w+)? (from|speaking)|^this is \w+/i,"This is + [tên] + from + [công ty] / speaking","Khi gọi điện, giới thiệu bằng 'This is…' (KHÔNG dùng 'I am'). Có thể thêm 'speaking'.","Điện thoại: This is…, không phải I am…",[["It's Kane from K Concept Space.","Thân mật hơn"]],[["This is Kane from K Concept Space.","Tôi là Kane ở K Concept Space."],["Hello, this is Hoa speaking.","Alô, Hoa đang nghe."]]],
+ [/^(hi|hello|welcome)\b/i,"Hello / Welcome to + [nơi]","Chào hỏi mở đầu. 'Welcome to' đi với nơi chốn.","Welcome to + nơi.",[["Good morning!","Chào buổi sáng"]],[["Welcome to our booth.","Chào mừng đến gian hàng."],["Hello, how can I help you?","Chào, tôi giúp gì được bạn?"]]],
+ [/^here (is|are)\b|^here,/i,"Here is + 1 thứ / Here are + nhiều thứ","Đưa đồ cho khách. Is cho số ít, are cho số nhiều.","Here is + 1 thứ · Here are + nhiều thứ.",[["This is [my card].","Đây là…"]],[["Here is my card.","Đây là danh thiếp của tôi."],["Here are the keys.","Đây là chìa khóa."]]],
+ [/^(see you|have a nice)\b/i,"See you + [thời điểm]  |  Have a nice day","Câu chào kết thúc cuộc gọi hoặc buổi gặp.","Chào kết: See you + thời điểm.",[["Talk to you soon.","Nói chuyện sau nhé."]],[["See you on Tuesday.","Hẹn gặp thứ Ba."],["Have a nice day!","Chúc một ngày tốt lành!"]]],
+ [/^(around|about|maybe|usually)\b/i,"Around / About + [số lượng hoặc thời gian]","Trả lời NGẮN, không cần nói đủ câu. Around / About = khoảng. Hội thoại thật thường chỉ nói vậy.","Trả lời ngắn: Around + số.",[["Approximately [thirty] square meters.","Xấp xỉ (trang trọng)"]],[["Around thirty square meters.","Khoảng 30 mét vuông."],["About two weeks.","Khoảng hai tuần."]]],
+ [/^(by|within|before|after|at)\b/i,"By + mốc (muộn nhất lúc đó)  |  Within + khoảng thời gian","By Friday = muộn nhất thứ Sáu. Within three days = trong vòng 3 ngày. Trả lời ngắn, rõ hạn chót.","By + mốc · Within + khoảng.",[["No later than [Friday].","Không muộn hơn…"]],[["By Friday.","Muộn nhất thứ Sáu."],["Within three days.","Trong vòng 3 ngày."]]],
+ [/^(we|they|you|i|the \w+( \w+)?) (are|am|is|'m|'re) \w+ing\b|^(we|they|you|i)'?(m|re) \w+ing\b/i,"S + am / is / are + V-ing","Việc ĐANG diễn ra lúc nói, hoặc kế hoạch gần. Cần cả 'be' và V-ing.","be + V-ing = đang làm.",[["We are in the middle of [checking].","Chúng tôi đang giữa lúc…"]],[["We are installing the lights.","Chúng tôi đang lắp đèn."],["I'm checking now.","Tôi đang kiểm tra."]]],
+ [/^(i|we) (don't|do not)\b/i,"S + don't + V gốc …","Phủ định thì hiện tại: don't + động từ nguyên. Dùng để nói điều mình/khách không muốn.","don't + V gốc.",[["We would prefer not to…","Chúng tôi muốn tránh…"]],[["We don't want a cold look.","Chúng tôi không muốn cảm giác lạnh."]]],
+ [/^(we|i) (are|am|'m) (a|an|the)\b/i,"We are a + [loại công ty] + from + [nơi]","Tự giới thiệu công ty: We are + a/an + loại hình + from + thành phố. Dùng khi gặp khách lần đầu.","Giới thiệu = We are a + loại công ty + from + nơi.",[["We specialize in [booth design].","Chúng tôi chuyên về…"],["Our company is based in [Ho Chi Minh City].","Công ty đặt trụ sở ở…"]],[["We are a design company from Vietnam.","Chúng tôi là công ty thiết kế đến từ Việt Nam."],["I am a designer at K Concept Space.","Tôi là nhà thiết kế ở K Concept Space."]]],
+ [/^anything else\b/i,"Anything else + (before / for …)?","Hỏi 'còn gì nữa không?' để chốt hết việc trước khi kết thúc. Rất hay dùng cuối buổi họp.","Chốt việc → Anything else?",[["Is there anything else [I can help with]?","Còn gì tôi giúp được nữa không?"]],[["Anything else before the opening?","Còn gì trước ngày khai trương không?"],["Anything else you need?","Bạn còn cần gì nữa không?"]]],
+ [/\b(does not|do not|doesn't|don't|is not|isn't|are not)\b/i,"S + does not / do not + V gốc  |  S + is not + tính từ","Phủ định: thêm not sau trợ động từ. does not / do not + động từ NGUYÊN (does not work, không phải does not works).","Phủ định = trợ động từ + not + V gốc.",[["doesn't / don't (nói tắt)","Đời thường hơn"]],[["The door does not close.","Cửa không đóng được."],["The light is not working.","Đèn không sáng."]]],
+ [/^(we|i) (plan|hope|try|expect)\b/i,"S + plan / hope / try + to + V gốc","Nói kế hoạch hoặc mong muốn. Các động từ này đi với 'to' + động từ gốc.","plan/hope/try + to + V.",[["We are planning to…","Đang lên kế hoạch…"]],[["We plan to renovate the whole floor.","Chúng tôi định cải tạo cả tầng."],["I hope to see you again.","Tôi mong gặp lại bạn."]]],
+ [/^(it|we|they|i|you|the \w+) \w+ed\b|^(it|we|they|i|you) (started|began|went|came|saw|got|made|took|had|was|were)\b/i,"S + V-ed + [thời điểm]","Kể chuyện ĐÃ xảy ra xong: động từ thêm -ed (động từ bất quy tắc đổi dạng: begin→began, go→went). Thường kèm yesterday, last week.","Việc đã qua → V-ed + mốc thời gian.",[["It has been [bent] since yesterday.","Nó bị … từ hôm qua"]],[["It started yesterday.","Nó bắt đầu từ hôm qua."],["We finished the wall on Monday.","Chúng tôi xong tường hôm thứ Hai."]]],
+ [/^(\w+ )?(\w+ )?(\w+ )?(includes?|costs?|needs?|starts?|begins?|arrives?|looks?|sounds?|works?|closes?|opens?|takes?|means?|covers?|allows?|requires?)\b/i,"S (số ít) + V-s + [phần còn lại]","Chủ ngữ SỐ ÍT (it, he, she, danh từ số ít) → động từ thêm -s (includes, costs, needs). Chủ ngữ số nhiều (we, they, doors) thì để nguyên.","Chủ ngữ số ít → động từ + s.",[["S (số nhiều) + V nguyên: We include…","Số nhiều không thêm -s"]],[["The price includes installation.","Giá đã gồm lắp đặt."],["Extra power costs more.","Điện thêm tốn thêm tiền."]]],
+ [/^(it|there|the \w+( \w+)?|that|this) (is|are|does not|do not|will|has)\b|^there (is|are)\b/i,"[Danh từ] + is / are / will + [trạng thái]","Nói về TÌNH TRẠNG: cái gì đang thế nào / sẽ ra sao. Thứ tự: cái gì → be → trạng thái.","Cái gì → be → thế nào.",[["There is / There are + [danh từ]","Có …"]],[["The wall is done.","Tường xong rồi."],["The panels will arrive late.","Tấm panel sẽ đến trễ."]]],
+ [/^(we|i|you) (have|use|offer|do|work|know|like|enjoy|only|also)\b/i,"S + V (hiện tại) + O","Nói sự thật/dịch vụ công ty có. he/she/it thì động từ thêm -s. Câu kể: AI + LÀM GÌ + CÁI GÌ.","Ai → làm gì → cái gì.",[["We provide [maintenance].","Chúng tôi cung cấp…"]],[["We offer a one-year warranty.","Chúng tôi bảo hành một năm."],["We use treated wood.","Chúng tôi dùng gỗ đã xử lý."]]]
+];
+const SENT_REACT = {"yes":["Vâng/Có","Trả lời đồng ý, rồi nói tiếp ý chính."],"no":["Không","Trả lời phủ định, rồi giải thích ngắn."],"sure":["Được thôi","Đồng ý một cách thoải mái."],"of course":["Tất nhiên","Đồng ý nhờ vả, nghe lịch sự."],"got it":["Hiểu rồi","Nghe xong và đã nắm ý — nói tự nhiên, hay dùng khi làm việc."],"understood":["Đã rõ","Giống 'Got it' nhưng trang trọng hơn."],"i see":["Ra vậy","Cho khách biết bạn đã hiểu/nhận thông tin."],"perfect":["Tuyệt","Khen/đồng ý hoàn toàn."],"great":["Tuyệt","Phản hồi tích cực ngắn gọn."],"good":["Tốt","Phản hồi tích cực, nhẹ."],"noted":["Đã ghi nhận","Cho khách biết bạn ghi nhớ và sẽ làm."],"exactly":["Chính xác","Đồng ý hoàn toàn với ý vừa nói."],"okay":["Được","Đồng ý/chấp nhận."],"done":["Xong","Báo đã làm xong."],"right":["Đúng","Xác nhận."],"interesting":["Thú vị","Nhận xét lịch sự, kéo dài cuộc trò chuyện."],"congratulations":["Chúc mừng","Mở lời khi khách có tin vui."],"you are right":["Bạn nói đúng","Đồng ý với góp ý của khách trước khi đưa giải pháp."],"that's right":["Đúng vậy","Xác nhận lại điều vừa nghe."],"that's fine":["Được rồi","Chấp nhận, không vấn đề."],"no problem":["Không sao","Đáp lại lời nhờ hoặc lời xin lỗi nhẹ; hoặc nhận làm việc khách nhờ."],"good idea":["Ý hay","Khen ý tưởng của người khác."],"much better":["Tốt hơn nhiều","Nhận xét sau khi đã sửa."],"that sounds fair":["Nghe hợp lý","Đồng ý với điều khoản/giá."],"really":["Thật á?","Ngạc nhiên nhẹ, mời người kia nói tiếp."],"that is possible":["Có thể được","Chấp nhận phương án."],"almost":["Gần xong","Báo tiến độ sắp hoàn thành."],"hmm":["Ừm","Đang suy nghĩ."],"oh":["Ồ","Ngạc nhiên nhẹ."]};
+function lesSplitSent(en){ return en.replace(/[’]/g,"'").split(/(?<=[.?!])\s+/).map(x=>x.trim()).filter(Boolean); }
+function lesSentHtml(en){
+  const slot = t=>t.replace(/\[[^\]]*\]/g,m=>`<span class="slot">${m}</span>`);
+  const sents = lesSplitSent(en), seen = new Set(), out = [], react = [];
+  sents.forEach(sn=>{
+    let base = sn.replace(/[.!?,]/g,'').trim().toLowerCase();
+    if(SENT_REACT[base]){ react.push(base); return; }
+    let core = sn.replace(/^[A-Z][a-z]+,\s+/,'').replace(/^(and|also|but|so),?\s+/i,'');
+    const m = core.match(/^(yes|no|sure|of course|okay|good|great|perfect|oh|hmm|understood|got it|exactly|done|congratulations|very happy),\s+(.+)$/i);
+    if(m){ const rw=m[1].toLowerCase(); if(SENT_REACT[rw]) react.push(rw); core = m[2]; }
+    core = core.replace(/^[a-z]/,c=>c.toUpperCase());
+    let hit = SENT_RULES.findIndex(r=>r[0].test(core));
+    if(hit<0){ const wc = core.split(/\s+/).length; if(wc<=7 && !/\b(is|are|was|will|can|do|does|did|have|has|need|want|looks?|sounds?)\b/i.test(core)){ out.push({sn,frag:true}); return; } }
+    if(hit<0){ out.push({sn,gen:true}); return; }
+    if(seen.has(hit)) return; seen.add(hit); out.push({sn,r:SENT_RULES[hit]});
+  });
+  const rc = react.length?`<div class="lx-s"><div class="lx-k">PHẢN HỒI NGẮN</div>${react.map(w=>`<div class="lx-y"><b>${w}</b> = ${SENT_REACT[w][0]}. ${SENT_REACT[w][1]}</div>`).join('')}<div class="lx-r">⚡ Ráp nhanh: nghe xong → nói 1 từ phản hồi → rồi nói ý chính.</div></div>`:'';
+  const blocks = out.slice(0,3).map(o=>{
+    if(o.frag) return `<div class="lx-s"><div class="lx-en">${o.sn}</div><div class="lx-f">🧩 Khuôn: trả lời rút gọn = [đúng phần được hỏi]</div><div class="lx-y"><b>Vì sao:</b> Hội thoại thật không cần nói đủ câu. Được hỏi gì thì nói đúng phần đó (số lượng, giờ, nơi chốn).</div><div class="lx-r">⚡ Ráp nhanh: hỏi \"bao nhiêu / khi nào / ở đâu\" → trả lời đúng con số / giờ / nơi, không cần chủ ngữ + động từ.</div></div>`;
+    if(o.gen) return `<div class="lx-s"><div class="lx-en">${o.sn}</div><div class="lx-f">🧩 Khuôn: Ai + làm gì + cho ai / ở đâu + khi nào</div><div class="lx-r">⚡ Ráp nhanh: câu kể luôn đi theo thứ tự AI → LÀM GÌ → CÁI GÌ → Ở ĐÂU / KHI NÀO. Giữ thứ tự này là đúng.</div></div>`;
+    const r=o.r;
+    return `<div class="lx-s"><div class="lx-en">${o.sn}</div>
+      <div class="lx-f">🧩 Khuôn: ${slot(r[1])}</div>
+      <div class="lx-y"><b>Vì sao:</b> ${r[2]}</div>
+      <div class="lx-r">⚡ Ráp nhanh: ${r[3]}</div>
+      <div class="lx-k">NÓI KHÁC ĐƯỢC KHÔNG?</div>${r[4].map(a=>`<div class="sc-alt" style="margin:4px 0 0;">${listenSlowPair(a[0].replace(/[\[\]]/g,''))}<div class="t"><strong>${slot(a[0])}</strong><i>${a[1]}</i></div></div>`).join('')}
+      <div class="lx-k">VÍ DỤ NỮA</div>${r[5].map(a=>`<div class="sc-alt" style="margin:4px 0 0;">${listenSlowPair(a[0])}<div class="t"><strong>${a[0]}</strong><i>${a[1]}</i></div></div>`).join('')}</div>`;
+  }).join('');
+  return rc+blocks;
+}
+
 let les = null;
 function openLessons(){ state.view='lessons'; render(); }
-function startLesson(i, step){ if(!lvUnlocked(lvOf(LESSONS[i].id))){ openLessons(); return; } stopLesson(); les = {i, step:step||'watch', token:0, sub:0, slow:false, pos:0, picked:null, right:0, spk:null, qs:null}; state.view='lesson'; render(); window.scrollTo(0,0); if(les.step==='watch') setTimeout(playLesson,500); }
+function startLesson(i, step){ if(!lvUnlocked(lvOf(LESSONS[i].id))){ openLessons(); return; } stopLesson(); les = {i, step:step||'watch', token:0, sub:0, slow:false, pos:0, picked:null, right:0, spk:null, qs:null, rung:1, bld:null, hint:false}; state.view='lesson'; render(); window.scrollTo(0,0); if(les.step==='watch') setTimeout(playLesson,500); }
 function stopLesson(){ if(les) les.token=0; try{ speechSynthesis.cancel(); }catch(e){} }
-function lesGo(step){ stopLesson(); les.step=step; les.pos=0; les.picked=null; les.spk=null; if(step==='quiz'){ les.qs=lesBuildQuiz(); les.right=0; } render(); window.scrollTo(0,0); if(step==='watch') setTimeout(playLesson,400); }
+function lesGo(step){ stopLesson(); les.step=step; les.pos=0; les.picked=null; les.spk=null; les.rung=1; les.bld=null; les.hint=false; if(step==='quiz'){ les.qs=lesBuildQuiz(); les.right=0; } render(); window.scrollTo(0,0); if(step==='watch') setTimeout(playLesson,400); }
 function lesLineUI(k){
   const L = LESSONS[les.i].lines[k];
   const c=document.getElementById('les-c'), y=document.getElementById('les-y'); if(!c) return;
@@ -4040,7 +4123,15 @@ function lesMic(k){
   r.onend=()=>{ recognizing=false; };
   try{ r.start(); }catch(e){ settled=true; clearTimeout(to); recognizing=false; les.spk={k,st:'error'}; render(); }
 }
-function lesSpeakNext(){ les.pos++; les.spk=null; const my=LESSONS[les.i].lines.filter(x=>x.w==='Y'); if(les.pos>=Math.min(6,my.length)){ lesGo('quiz'); return; } render(); }
+const LES_RUNGS = [['Nghe và đọc theo','Có chữ trước mặt. Chỉ nghe rồi đọc to, chưa chấm điểm.'],['Ráp câu từ các từ','Bấm các từ theo đúng thứ tự để ráp thành câu. Bấm 🔊 nghe nếu quên.'],['Nói theo, có chữ','Nhìn chữ và nói vào mic.'],['Nói không nhìn chữ','Chỉ có nghĩa tiếng Việt. Tự nói câu tiếng Anh. Kẹt thì bấm Gợi ý.']];
+function lesMyLines(){ return LESSONS[les.i].lines.map((x,k)=>({x,k})).filter(o=>o.x.w==='Y').slice(0,4); }
+function lesSpeakNext(){ les.pos++; les.spk=null; les.bld=null; les.hint=false; if(les.pos>=lesMyLines().length){ les.rung++; les.pos=0; if(les.rung>4){ lesGo('quiz'); return; } window.scrollTo(0,0); } render(); }
+function lesNorm(t){ return t.toLowerCase().replace(/[^a-z0-9' ]/g,'').replace(/\s+/g,' ').trim(); }
+function lesBldInit(k,text){ const w=text.split(/\s+/).map((t,id)=>({id,t})); let sh=shuffleArr(w.slice()); if(w.length>1 && sh.every((x,n)=>x.id===n)) sh.reverse(); les.bld={k,words:w,pool:sh,sel:[],st:''}; }
+function lesBld(id){ const b=les.bld; if(!b||b.st==='ok') return; if(b.sel.indexOf(id)>=0) return; b.sel.push(id); if(b.sel.length===b.words.length){ const got=lesNorm(b.sel.map(i=>b.words[i].t).join(' ')), want=lesNorm(b.words.map(x=>x.t).join(' ')); b.st = got===want?'ok':'bad'; sfx(b.st==='ok'?'ok':'bad'); skillLog('W', b.st==='ok'); if(b.st==='ok') addXP(2); } render(); }
+function lesBldUndo(id){ const b=les.bld; if(!b||b.st==='ok') return; b.sel=b.sel.filter(x=>x!==id); b.st=''; render(); }
+function lesBldReset(){ const b=les.bld; b.sel=[]; b.st=''; render(); }
+function lesHintToggle(){ les.hint=true; render(); }
 function lesStepsBar(){
   const S=[['watch','1 Xem'],['chunks','2 Khuôn'],['speak','3 Nói'],['quiz','4 Quiz']];
   return `<div class="les-steps">${S.map(s=>`<button class="${les.step===s[0]?'on':''}" onclick="lesGo('${s[0]}')">${s[1]}</button>`).join('')}</div>`;
@@ -4054,14 +4145,14 @@ function renderLessons(){
     return `<div class="les-grp">${L.t} ${passed?'· ✅ đã đạt':''}</div><p class="sc-vi" style="margin:0 2px 8px;">${L.s}. ${open?`Đã học ${lvDone(L.n)}/${L.ids.length} bài.`:`Cần thi đạt Cấp ${L.n-1} để mở.`}</p>${cards}
       <button class="btn-secondary" style="width:100%;margin-bottom:6px;" onclick="startEx4(${L.n})">🏆 Thi ${passed?'lại ':''}Cấp ${L.n}${L.n>1&&!open?' (thi thẳng để lên cấp)':''}</button>`; }).join('');
   return `${headerHtml(false)}<div class="pages"><button class="home-link" style="margin-bottom:12px;color:var(--navy);border-color:var(--navy);" onclick="goHome()">← Trang chủ</button>
-  <h2 class="intro-title">🗺️ Lộ trình ${LESSONS.length} bài</h2><p class="sc-vi">Mỗi bài ~15 phút: xem cảnh → học 4 khuôn → nói theo → quiz. Học hết bài của cấp rồi thi: đạt cả 4 kỹ năng (≥80%) để mở cấp tiếp.</p>${blocks}</div>`;
+  <h2 class="intro-title">🗺️ Lộ trình ${LESSONS.length} bài</h2><p class="sc-vi">Mỗi bài ~15 phút: xem cảnh → học 4 khuôn → nói 4 bậc (nghe → ráp câu → nói có chữ → nói không chữ) → quiz. Học hết bài của cấp rồi thi: đạt cả 4 kỹ năng (≥80%) để mở cấp tiếp.</p>${blocks}</div>`;
 }
 function renderLesson(){
   const L = LESSONS[les.i];
   const head = `${headerHtml(false)}<div class="pages"><button class="home-link" style="margin-bottom:10px;color:var(--navy);border-color:var(--navy);" onclick="stopLesson();openLessons()">← Danh sách bài</button>
     <div class="item-count">${L.icon} Bài ${les.i+1}. ${L.title}</div>${lesStepsBar()}`;
   if(les.step==='watch'){
-    const lines = L.lines.map((x,k)=>`<button class="les-line ${x.w==='Y'?'you':''}" onclick="lesTap(${k})"><b>${x.w==='Y'?L.you+' (bạn)':L.client}</b>${x.en}<i>${x.vi}</i></button>`).join('');
+    const lines = L.lines.map((x,k)=>`<div class="les-lw"><button class="les-line ${x.w==='Y'?'you':''}" onclick="lesTap(${k})"><b>${x.w==='Y'?L.you+' (bạn)':L.client}</b>${x.en}<i>${x.vi}</i></button><details class="lx"><summary>💡 Cấu trúc · vì sao · nói khác · ví dụ</summary>${lesSentHtml(x.en)}</details></div>`).join('');
     return head+`<div class="les-stage">${lesSceneSvg(L.scene)}</div>
     <div id="les-sub" class="les-sub"><div id="les-en" class="les-en">…</div><div id="les-vi" class="les-vi"></div></div>
     <div id="les-readbox"></div>
@@ -4079,20 +4170,38 @@ function renderLesson(){
     <button class="btn-primary" onclick="lesGo('speak')">Tiếp: nói theo →</button></div>`;
   }
   if(les.step==='speak'){
-    const my = L.lines.map((x,k)=>({x,k})).filter(o=>o.x.w==='Y').slice(0,6);
-    if(les.pos>=my.length){ lesGo('quiz'); return ''; }
-    const o = my[les.pos], prev = L.lines[o.k-1], sp = les.spk;
+    const my = lesMyLines();
+    if(les.pos>=my.length){ lesSpeakNext(); return ''; }
+    const o = my[les.pos], prev = L.lines[o.k-1], sp = les.spk, R = les.rung, RI = LES_RUNGS[R-1];
+    const bar = `<div class="item-count">Bậc ${R}/4 · ${RI[0]} · câu ${les.pos+1}/${my.length}</div><div class="les-steps" style="margin:6px 0;">${[1,2,3,4].map(n=>`<button class="${n===R?'on':''}" disabled>${n}</button>`).join('')}</div><p class="sc-vi">${RI[1]}</p>`;
+    const clientBox = prev?`<div class="sim-bubble"><div class="sc-vi">${L.client} nói:</div><strong>${prev.en}</strong> ${listenIconPairHtml(prev.en,'phrase-play','')}<div class="sc-vi">${prev.vi}</div></div>`:'';
     let fb='';
     if(sp && sp.k===o.k){
-      if(sp.st==='listening') fb='<div class="feedback mid">🎙️ Đang nghe… hãy nói câu trên.</div>';
+      if(sp.st==='listening') fb='<div class="feedback mid">🎙️ Đang nghe… hãy nói.</div>';
       else if(sp.st==='error') fb='<div class="feedback bad">Không nghe được. Thử lại, nói gần mic hơn.</div>';
       else if(sp.st==='nosr') fb='<div class="feedback mid">Trình duyệt này không có mic nhận giọng. Bạn tự đọc to 3 lần rồi bấm Câu tiếp.</div>';
       else if(sp.st==='done') fb=`<div class="feedback ${sp.ok?'good':'bad'}">${sp.ok?'✓ Rất tốt!':'Chưa khớp, thử lại.'} (${sp.pct}%) — nghe được: "${sp.heard}"</div>`;
     }
-    return head+`<div class="item-count">Nói theo · ${les.pos+1}/${my.length}</div>
-    ${prev?`<div class="sim-bubble"><div class="sc-vi">${L.client} nói:</div><strong>${prev.en}</strong> ${listenIconPairHtml(prev.en,'phrase-play','')}<div class="sc-vi">${prev.vi}</div></div>`:''}
-    <div class="sim-bubble me"><div class="sc-vi">Bạn trả lời:</div><div style="font-size:1.15rem;font-weight:700;color:var(--navy);">${o.x.en}</div>${listenSlowPair(o.x.en)}${lesReadHtml(o.x.en)}<div class="sc-vi">${o.x.vi}</div></div>
-    ${fb}<div class="les-ctrl"><button class="btn-primary" onclick="lesMic(${o.k})">🎙️ Nói câu này</button><button class="btn-secondary" onclick="lesSpeakNext()">Câu tiếp →</button></div></div>`;
+    if(R===1){
+      return head+bar+clientBox+`<div class="sim-bubble me"><div class="sc-vi">Bạn nói:</div><div style="font-size:1.15rem;font-weight:700;color:var(--navy);">${o.x.en}</div>${listenSlowPair(o.x.en)}${lesReadHtml(o.x.en)}<div class="sc-vi">${o.x.vi}</div></div>
+      <p class="sc-vi">Nghe 1–2 lần (🐢 nếu nhanh), rồi đọc to theo 2 lần.</p><div class="les-ctrl"><button class="btn-primary" onclick="lesSpeakNext()">Đã đọc theo ✓ Câu tiếp →</button></div></div>`;
+    }
+    if(R===2){
+      if(!les.bld || les.bld.k!==o.k) lesBldInit(o.k,o.x.en);
+      const bl=les.bld, chosen=bl.sel.map(id=>`<button class="slot" style="font-size:1rem;margin:3px;padding:6px 10px;" onclick="lesBldUndo(${id})">${bl.words[id].t}</button>`).join('');
+      const pool=bl.pool.map(w=>bl.sel.indexOf(w.id)>=0?`<button class="sim-opt" disabled style="display:inline-block;width:auto;margin:3px;opacity:.3;">${w.t}</button>`:`<button class="sim-opt" style="display:inline-block;width:auto;margin:3px;" onclick="lesBld(${w.id})">${w.t}</button>`).join('');
+      const f2 = bl.st==='ok'?`<div class="feedback good">✓ Đúng! Đọc to câu này 1 lần.</div>`:bl.st==='bad'?`<div class="feedback bad">Chưa đúng thứ tự. Bấm từ ở trên để bỏ ra, hoặc làm lại.</div>`:'';
+      return head+bar+clientBox+`<div class="sim-bubble me"><div class="sc-vi">Nghĩa: ${o.x.vi}</div>${listenSlowPair(o.x.en)}<div style="min-height:48px;margin-top:8px;border-bottom:2px dashed var(--navy);">${chosen}</div></div><div style="margin:10px 0;">${pool}</div>${f2}
+      <div class="les-ctrl">${bl.st==='bad'?'<button class="btn-secondary" onclick="lesBldReset()">Làm lại</button>':''}${bl.st==='ok'?'<button class="btn-primary" onclick="lesSpeakNext()">Câu tiếp →</button>':'<button class="btn-secondary" onclick="lesSpeakNext()">Bỏ qua →</button>'}</div></div>`;
+    }
+    if(R===3){
+      return head+bar+clientBox+`<div class="sim-bubble me"><div class="sc-vi">Bạn trả lời:</div><div style="font-size:1.15rem;font-weight:700;color:var(--navy);">${o.x.en}</div>${listenSlowPair(o.x.en)}${lesReadHtml(o.x.en)}<div class="sc-vi">${o.x.vi}</div></div>
+      ${fb}<div class="les-ctrl"><button class="btn-primary" onclick="lesMic(${o.k})">🎙️ Nói câu này</button><button class="btn-secondary" onclick="lesSpeakNext()">Câu tiếp →</button></div></div>`;
+    }
+    const first = o.x.en.split(/\s+/).slice(0,2).join(' ')+' …';
+    const reveal = (les.hint||(sp&&sp.st==='done'))?`<div style="font-size:1.1rem;font-weight:700;color:var(--navy);margin-top:6px;">${les.hint&&!(sp&&sp.st==='done')?first:o.x.en}</div>${sp&&sp.st==='done'?listenSlowPair(o.x.en):''}`:'';
+    return head+bar+clientBox+`<div class="sim-bubble me"><div class="sc-vi">Bạn muốn nói:</div><div style="font-size:1.1rem;font-weight:700;">${o.x.vi}</div>${reveal}</div>
+    ${fb}<div class="les-ctrl"><button class="btn-primary" onclick="lesMic(${o.k})">🎙️ Nói bằng tiếng Anh</button><button class="btn-secondary" onclick="lesHintToggle()">💡 Gợi ý</button><button class="btn-secondary" onclick="lesSpeakNext()">Câu tiếp →</button></div></div>`;
   }
   if(les.step==='quiz'){
     const q=les.qs[les.pos], ans=les.picked!==null;
@@ -5420,7 +5529,7 @@ function renderLoading(){
   return '<div class="loading">Đang mở sổ hộ chiếu...</div>';
 }
 
-const APP_VERSION = 'v55';
+const APP_VERSION = 'v57';
 function headerHtml(showHome){
   const strip = SKILL_ORDER.map(sk=>`<span class="visa-item">${svgIcon(SKILL_ICON[sk],14)}${SKILL_LABEL[sk]}</span>`).join('');
   return `
