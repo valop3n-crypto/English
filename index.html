@@ -4251,11 +4251,98 @@ l18.8|Do you offer + [danh từ]?|offer = cung cấp (dịch vụ). Do you + V g
 l18.9|Yes, we offer + a/an + [danh từ] + for + a/an + [danh từ]|'a monthly check' = kiểm tra hằng tháng. 'for a small fee' = với một khoản phí nhỏ (for + giá / phí).|for + a small fee|Yes, we provide monthly checks for a small fee.~Có, chúng tôi kiểm tra hằng tháng với phí nhỏ.|Yes, we offer a free check for one month.~Có, chúng tôi kiểm tra miễn phí 1 tháng.`;
 const LINE_EX = {};
 LINE_EX_RAW.split('\n').forEach(r=>{ const p=r.split('|'); if(p.length<6) return; (LINE_EX[p[0]]=LINE_EX[p[0]]||[]).push({f:p[1],why:p[2],rule:p[3],alt:p[4].split('~'),ex:p[5].split('~')}); });
+function lesBasicsHtml(){
+  return `<details class="lx" style="margin:10px 0;"><summary>🔑 3 điều để hiểu mọi câu (đọc 1 phút)</summary>
+  <div class="lx-s"><div class="lx-k">1 · CHỦ NGỮ + ĐỘNG TỪ</div>
+   <div class="lx-f">This booth <span class="slot">looks</span> great.</div>
+   <div class="lx-y"><b>Chủ ngữ</b> = nhân vật chính, đứng TRƯỚC động từ, trả lời "AI / CÁI GÌ?". Thay được bằng it / they / we / I. Ở đây "This booth" = it. <b>Động từ</b> = looks (trông).</div>
+   <div class="lx-r">⚡ Tìm chủ ngữ: hỏi "Cái gì + looks?" → This booth.</div></div>
+  <div class="lx-s"><div class="lx-k">2 · DANH TỪ SỐ ÍT PHẢI CÓ CHỮ ĐỨNG TRƯỚC</div>
+   <div class="lx-f">✖ Booth looks great. → ✔ <span class="slot">This / The / Our / A</span> booth looks great.</div>
+   <div class="lx-y">booth đếm được, số ít nên cần this / the / our / a. <b>this</b> = chỉ tay vào cái đang thấy · <b>the</b> = hai bên đã biết · <b>our / your</b> = của ai · <b>a</b> = nhắc lần đầu. Số nhiều hoặc không đếm được thì bỏ được: Booths look great. Wood looks warm.</div>
+   <div class="lx-r">⚡ Không chắc → dùng the hoặc our.</div></div>
+  <div class="lx-s"><div class="lx-k">3 · SỐ ÍT → ĐỘNG TỪ THÊM -s</div>
+   <div class="lx-f">The booth <span class="slot">looks</span> · The booths <span class="slot">look</span></div>
+   <div class="lx-y">Chủ ngữ số ít (it, he, she, 1 thứ) → động từ thêm -s. Số nhiều (we, they, nhiều thứ) → động từ để nguyên. Sau can / will / could / should thì động từ luôn để nguyên.</div>
+   <div class="lx-r">⚡ 1 thứ → +s · nhiều thứ → không +s · can/will + V gốc.</div></div></details>`;
+}
 function lesLineExHtml(id,en){
   const L = LINE_EX[id]; if(!L) return lesSentHtml(en);
   const slot = t=>t.replace(/\[[^\]]*\]/g,m=>`<span class="slot">${m}</span>`);
   const row = a=>`<div class="sc-alt" style="margin:4px 0 0;">${listenSlowPair(a[0])}<div class="t"><strong>${a[0]}</strong><i>${a[1]||''}</i></div></div>`;
   return L.map(o=>`<div class="lx-s"><div class="lx-f">🧩 ${slot(o.f)}</div><div class="lx-y">${o.why}</div><div class="lx-r">⚡ Ráp nhanh: ${o.rule}</div><div class="lx-k">NÓI KHÁC ĐƯỢC KHÔNG?</div>${row(o.alt)}<div class="lx-k">VÍ DỤ NỮA</div>${row(o.ex)}</div>`).join('');
+}
+
+/* ============ CẤP 0 · NỀN TẢNG (học như trẻ con: nhỏ · dễ · dùng được ngay) ============ */
+const BASICS = [
+ {id:'m1',icon:'🏷️',t:'Gọi tên đồ vật',s:'This is a …',idea:'Muốn nói "đây là cái gì": This is a + tên đồ. Tên đồ bắt đầu bằng âm a, e, i, o, u thì dùng AN thay A.',
+  cards:[['This is a booth.','Đây là một gian hàng.'],['This is a wall.','Đây là một bức tường.'],['This is a table.','Đây là một cái bàn.'],['This is an office.','Đây là một văn phòng. (an vì office bắt đầu bằng âm "o")'],['That is a door.','Kia là một cái cửa. (that = cái ở xa)']],
+  tries:[['This is ___ office.',['a','an','the'],1,'office bắt đầu bằng âm "o" nên dùng an.'],['___ is a table. (cái ở ngay trước mặt)',['This','That','It are'],0,'this = gần, that = xa.'],['This is ___ booth.',['an','a','is'],1,'booth bắt đầu bằng "b" nên dùng a.']],
+  use:['Khách chỉ vào tờ rơi và hỏi: "What is this?"','This is a brochure.','Đây là tờ giới thiệu.']},
+ {id:'m2',icon:'🙋',t:'Của ai?',s:'my · your · our',idea:'Nói đồ của ai thì đặt my / your / our / their trước tên đồ. my = của tôi, your = của bạn, our = của chúng tôi, their = của họ.',
+  cards:[['This is our booth.','Đây là gian hàng của chúng tôi.'],['Here is my card.','Đây là danh thiếp của tôi.'],['Is this your design?','Đây là thiết kế của bạn à?'],['That is their stage.','Kia là sân khấu của họ.'],['Could I have yours?','Cho tôi xin của bạn? (yours = your card, khỏi nhắc lại)']],
+  tries:[['This is ___ booth. (của chúng tôi)',['our','we','us'],0,'Trước danh từ dùng our, không dùng we.'],['Here is ___ card. (của tôi)',['I','my','me'],1,'my + danh từ = của tôi.'],['Is this ___ drawing? (của bạn)',['you','your','yours'],1,'your đứng trước danh từ.']],
+  use:['Bạn đưa danh thiếp cho khách.','Here is my card. Could I have yours?','Đây là danh thiếp của tôi. Cho tôi xin của bạn nhé?']},
+ {id:'m3',icon:'🧑‍🔧',t:'Ai làm gì?',s:'I / we + động từ',idea:'Câu cơ bản nhất: AI + LÀM GÌ + CÁI GÌ. Với he / she / it (một người, một thứ), động từ thêm -s.',
+  cards:[['I design booths.','Tôi thiết kế gian hàng.'],['We build offices.','Chúng tôi xây văn phòng.'],['You pay thirty percent first.','Bạn trả 30% trước.'],['They install the lights.','Họ lắp đèn.'],['He checks the wall.','Anh ấy kiểm tra tường. (he → checks có -s)']],
+  tries:[['We ___ booths.',['design','designs','designing'],0,'we là số nhiều, động từ để nguyên.'],['She ___ the lights.',['check','checks','checking'],1,'she là một người → thêm -s.'],['They ___ the wall.',['paints','paint','painted'],1,'they → để nguyên động từ.']],
+  use:['Khách hỏi: "What do you do?"','We design and build booths.','Chúng tôi thiết kế và thi công gian hàng.']},
+ {id:'m4',icon:'🎨',t:'Nó thế nào?',s:'is / are + tính từ',idea:'Muốn nói "nó thế nào": thứ đó + is (một thứ) / are (nhiều thứ) + tính từ. I thì dùng am.',
+  cards:[['The booth is big.','Gian hàng to.'],['The price is high.','Giá cao.'],['The lights are bright.','Đèn sáng. (nhiều đèn → are)'],['The wall looks warm.','Bức tường trông ấm.'],['I am happy with it.','Tôi hài lòng với nó.']],
+  tries:[['The price ___ high.',['is','are','am'],0,'price là một thứ → is.'],['The lights ___ bright.',['is','are','am'],1,'lights là nhiều đèn → are.'],['I ___ ready.',['is','are','am'],2,'I luôn đi với am.']],
+  use:['Khách chê màu.','The color is too dark.','Màu tối quá.']},
+ {id:'m5',icon:'🔢',t:'Một và nhiều',s:'a booth · two booths',idea:'Một thứ: a / an. Nhiều thứ: thêm -s (hoặc -es sau x, ch, s). Có số từ 2 trở lên thì danh từ phải có -s.',
+  cards:[['one booth, two booths','1 gian hàng, 2 gian hàng'],['one office, three offices','1 văn phòng, 3 văn phòng'],['one box, five boxes','1 thùng, 5 thùng (box → boxes)'],['We build booths and offices.','Chúng tôi xây gian hàng và văn phòng.'],['It is thirty square meters.','Nó rộng 30 mét vuông.']],
+  tries:[['We have three ___.',['box','boxes','boxs'],1,'box tận cùng x → thêm -es.'],['Two ___',['booth','booths','a booth'],1,'có số 2 → thêm -s.'],['We need ___ new booth.',['a','two','some booths'],0,'booth số ít cần a.']],
+  use:['Khách hỏi bạn làm những gì.','We build booths, offices and shops.','Chúng tôi làm gian hàng, văn phòng và cửa hàng.']},
+ {id:'m6',icon:'❓',t:'Hỏi khách',s:'What · How much · When',idea:'Từ hỏi đứng đầu câu. Chọn từ hỏi theo thứ bạn muốn biết: What = cái gì, How much = giá, How long = bao lâu, Where = ở đâu, When = khi nào.',
+  cards:[['What is this?','Đây là cái gì?'],['How much is it?','Cái này giá bao nhiêu?'],['How long does it take?','Mất bao lâu?'],['Where is the entrance?','Lối vào ở đâu?'],['When can we start?','Khi nào bắt đầu được?']],
+  tries:[['___ is it? — Two million.',['How much','How long','Where'],0,'Hỏi giá tiền → How much.'],['___ does it take? — Three days.',['When','How long','What'],1,'Hỏi thời gian kéo dài → How long.'],['___ can we start? — On Friday.',['Where','How much','When'],2,'Hỏi thời điểm → When.']],
+  use:['Bạn muốn biết khách có bao nhiêu mét vuông.','How big is your booth?','Gian hàng của bạn rộng bao nhiêu?']},
+ {id:'m7',icon:'🙏',t:'Nhờ và xin phép',s:'Could you … ? Please …',idea:'Nhờ ai: Could you + động từ. Xin phép: Could I + động từ. Thêm Please cho lịch sự. Khen / cảm ơn: Thank you for + việc.',
+  cards:[['Could you send me the file?','Bạn gửi tôi file được không?'],['Could I have your card?','Cho tôi xin danh thiếp được không?'],['Please wait here.','Vui lòng đợi ở đây.'],['Can you help me?','Bạn giúp tôi được không?'],['Thank you for coming.','Cảm ơn đã đến.']],
+  tries:[['Nhờ khách gửi email, nói lịch sự nhất:',['Send me email.','Could you send me an email?','You send email.'],1,'Could you + động từ là cách nhờ lịch sự.'],['Xin phép chụp ảnh:',['Could I take a photo?','I take photo now.','Photo me.'],0,'Could I + động từ để xin phép.'],['Cảm ơn khách đã ghé:',['Thank you for coming.','Thank you coming.','Thanks to come.'],0,'Thank you for + V-ing.']],
+  use:['Bạn muốn khách gửi bản vẽ.','Could you send me the drawing, please?','Bạn gửi tôi bản vẽ giúp nhé?']},
+ {id:'m8',icon:'🕐',t:'Khi nào · Ở đâu',s:'at · on · in',idea:'at = giờ hoặc điểm (at 8 a.m., at the entrance). on = thứ / ngày (on Friday). in = khoảng thời gian sắp tới hoặc bên trong (in two weeks, in the hall).',
+  cards:[['at 8 a.m.','lúc 8 giờ sáng'],['on Friday','vào thứ Sáu'],['in two weeks','hai tuần nữa'],['at the entrance','ở lối vào'],['in the hall','trong hội trường']],
+  tries:[['See you ___ Friday.',['at','on','in'],1,'thứ / ngày → on.'],['We start ___ 8 a.m.',['at','on','in'],0,'giờ → at.'],['We will finish ___ two weeks.',['at','on','in'],2,'khoảng thời gian → in.']],
+  use:['Chốt lịch hẹn.','See you on Friday at two.','Hẹn gặp thứ Sáu lúc 2 giờ.']},
+ {id:'m9',icon:'⏳',t:'Đã · Đang · Sẽ',s:'did · am doing · will do',idea:'Ba mốc thời gian. ĐÃ xong: động từ thêm -ed (đổi dạng nếu bất quy tắc). ĐANG làm: am / is / are + V-ing. SẼ làm: will + động từ gốc.',
+  cards:[['I sent the drawing yesterday.','Hôm qua tôi đã gửi bản vẽ.'],['I am sending it now.','Bây giờ tôi đang gửi nó.'],['I will send it tomorrow.','Ngày mai tôi sẽ gửi nó.'],['We finished the wall.','Chúng tôi đã xong bức tường.'],['We are installing the lights.','Chúng tôi đang lắp đèn.']],
+  tries:[['Yesterday we ___ the wall.',['paint','painted','will paint'],1,'yesterday = đã xảy ra → painted.'],['Now we ___ the lights.',['are installing','installed','will install'],0,'now = đang → be + V-ing.'],['Tomorrow I ___ it.',['sent','am sending','will send'],2,'tomorrow = sẽ → will + động từ gốc.']],
+  use:['Khách hỏi tiến độ.','We finished the wall. We are installing the lights now. We will finish on Friday.','Đã xong tường. Đang lắp đèn. Thứ Sáu sẽ xong.']},
+ {id:'m10',icon:'🔗',t:'Nối ý',s:'and · but · so · because · if',idea:'Nối hai ý thành một câu: and = và, but = nhưng, so = nên, because = bởi vì, if = nếu.',
+  cards:[['We design and build.','Chúng tôi thiết kế và thi công.'],['It is nice, but expensive.','Đẹp nhưng đắt.'],['The price is high, so we offer a discount.','Giá cao nên chúng tôi giảm giá.'],['We are late because the panels are late.','Chúng tôi trễ vì tấm gỗ trễ.'],['We can finish on time if you confirm today.','Chúng tôi xong đúng hạn nếu bạn chốt hôm nay.']],
+  tries:[['It is beautiful, ___ expensive.',['and','but','so'],1,'ý đối lập → but.'],['We are late ___ the truck is late.',['because','so','but'],0,'giải thích lý do → because.'],['___ you confirm today, we can start.',['If','But','So'],0,'điều kiện → If.']],
+  use:['Khách thấy giá cao.','The price includes design, materials and installation, so it is a good value.','Giá gồm thiết kế, vật liệu và lắp đặt nên rất đáng tiền.']}
+];
+let bs = null;
+function bsDone(id){ return !!(lesState.bs && lesState.bs[id]); }
+function bsAllDone(){ return BASICS.every(m=>bsDone(m.id)); }
+function bsNextIdx(){ const i = BASICS.findIndex(m=>!bsDone(m.id)); return i<0?0:i; }
+function startBasic(i){ stopLesson&&stopLesson(); bs={i,step:'idea',pos:0,picked:null,right:0}; state.view='basic'; render(); window.scrollTo(0,0); }
+function bsGo(step){ bs.step=step; bs.pos=0; bs.picked=null; render(); window.scrollTo(0,0); }
+function bsPick(k){ if(bs.picked!==null) return; const q=BASICS[bs.i].tries[bs.pos]; bs.picked=k; const ok = k===q[2]; if(ok) bs.right++; sfx(ok?'ok':'bad'); skillLog('R', ok); if(ok) addXP(1); render(); }
+function bsNext(){ const m=BASICS[bs.i]; bs.pos++; bs.picked=null; if(bs.pos>=m.tries.length){ bs.step='use'; bs.pos=0; } render(); window.scrollTo(0,0); }
+function bsFinish(){ lesState.bs = lesState.bs||{}; lesState.bs[BASICS[bs.i].id]=true; saveLessons(); addXP(5); if(bs.i+1<BASICS.length) startBasic(bs.i+1); else openLessons(); }
+function renderBasic(){
+  const m=BASICS[bs.i];
+  const head=`${headerHtml(false)}<div class="pages"><button class="home-link" style="margin-bottom:10px;color:var(--navy);border-color:var(--navy);" onclick="openLessons()">← Lộ trình</button><div class="item-count">${m.icon} Cấp 0 · Bước ${bs.i+1}/${BASICS.length}: ${m.t}</div>
+   <div class="les-steps">${[['idea','1 Hiểu'],['try','2 Thử'],['use','3 Dùng']].map(s=>`<button class="${bs.step===s[0]?'on':''}" disabled>${s[1]}</button>`).join('')}</div>`;
+  if(bs.step==='idea'){
+    return head+`<div class="sc-card"><div class="les-k">Ý CHÍNH (1 ĐIỀU DUY NHẤT)</div><div class="lx-r" style="font-size:1rem;">${m.idea}</div></div>
+    <div class="les-k" style="margin:12px 0 4px;">NGHE · ĐỌC THEO</div>${m.cards.map(c=>`<div class="sc-alt" style="margin:6px 0 0;">${listenSlowPair(c[0])}<div class="t"><strong>${c[0]}</strong><i>${c[1]}</i></div></div>`).join('')}
+    <p class="sc-vi">Nghe mỗi câu 1–2 lần, đọc to theo. Chưa cần nhớ hết.</p><button class="btn-primary" onclick="bsGo('try')">Tiếp: thử 3 câu →</button></div>`;
+  }
+  if(bs.step==='try'){
+    const q=m.tries[bs.pos], ans=bs.picked!==null;
+    const opts=q[1].map((o,k)=>{ let cls='sim-opt'; if(ans){ if(k===q[2]) cls+=' ok'; else if(k===bs.picked) cls+=' no'; } return `<button class="${cls}" ${ans?'disabled':`onclick="bsPick(${k})"`}>${o}</button>`; }).join('');
+    const fb=ans?`<div class="sim-bubble me">${bs.picked===q[2]?'✅ Đúng! ':'❌ Chưa đúng. '}<span class="sc-vi">${q[3]}</span></div><button class="btn-primary" onclick="bsNext()">${bs.pos+1>=m.tries.length?'Tiếp: dùng với khách →':'Câu tiếp →'}</button>`:'';
+    return head+`<div class="item-count">Thử · ${bs.pos+1}/${m.tries.length}</div><p style="font-size:1.1rem;margin:10px 0;"><strong>${q[0]}</strong></p>${opts}${fb}</div>`;
+  }
+  const u=m.use;
+  return head+`<div class="sc-card"><div class="les-k">TÌNH HUỐNG THẬT</div><p>${u[0]}</p><div class="sim-bubble me"><div style="font-size:1.15rem;font-weight:700;color:var(--navy);">${u[1]}</div>${listenSlowPair(u[1])}${lesReadHtml(u[1])}<div class="sc-vi">${u[2]}</div></div></div>
+  <p class="sc-vi">Đọc to câu trên 3 lần, như đang nói với khách thật. Muốn chấm điểm thì vào bước Nói của các bài ở Cấp 1.</p><button class="btn-primary" onclick="bsFinish()">Xong bước này ✓ ${bs.i+1<BASICS.length?'→ bước tiếp theo':''}</button></div>`;
 }
 
 let les = null;
@@ -4361,8 +4448,9 @@ function renderLessons(){
         : `<div class="les-card locked"><div class="les-ic">🔒</div><div class="les-t"><strong>${l.title}</strong><span>${l.sub}</span></div></div>`; }).join('');
     return `<div class="les-grp">${L.t} ${passed?'· ✅ đã đạt':''}</div><p class="sc-vi" style="margin:0 2px 8px;">${L.s}. ${open?`Đã học ${lvDone(L.n)}/${L.ids.length} bài.`:`Cần thi đạt Cấp ${L.n-1} để mở.`}</p>${cards}
       <button class="btn-secondary" style="width:100%;margin-bottom:6px;" onclick="startEx4(${L.n})">🏆 Thi ${passed?'lại ':''}Cấp ${L.n}${L.n>1&&!open?' (thi thẳng để lên cấp)':''}</button>`; }).join('');
+  const b0 = `<div class="les-grp">Cấp 0 · Nền tảng (như trẻ học) ${bsAllDone()?'· ✅':''}</div><p class="sc-vi" style="margin:0 2px 8px;">10 bước nhỏ, mỗi bước 3 phút: hiểu 1 điều → thử 3 câu → dùng với khách. Đã học ${BASICS.filter(m=>bsDone(m.id)).length}/${BASICS.length}.</p>${BASICS.map((m,i)=>`<button class="les-card ${bsDone(m.id)?'done':''}" onclick="startBasic(${i})"><div class="les-ic">${m.icon}</div><div class="les-t"><strong>${m.t}</strong><span>${m.s}</span></div><div class="les-ck">${bsDone(m.id)?'✓':'▶'}</div></button>`).join('')}`;
   return `${headerHtml(false)}<div class="pages"><button class="home-link" style="margin-bottom:12px;color:var(--navy);border-color:var(--navy);" onclick="goHome()">← Trang chủ</button>
-  <h2 class="intro-title">🗺️ Lộ trình ${LESSONS.length} bài</h2><p class="sc-vi">Mỗi bài ~15 phút: xem cảnh → học 4 khuôn → nói 4 bậc (nghe → ráp câu → nói có chữ → nói không chữ) → quiz. Học hết bài của cấp rồi thi: đạt cả 4 kỹ năng (≥80%) để mở cấp tiếp.</p>${blocks}</div>`;
+  <h2 class="intro-title">🗺️ Lộ trình ${LESSONS.length} bài</h2><p class="sc-vi">Mỗi bài ~15 phút: xem cảnh → học 4 khuôn → nói 4 bậc (nghe → ráp câu → nói có chữ → nói không chữ) → quiz. Học hết bài của cấp rồi thi: đạt cả 4 kỹ năng (≥80%) để mở cấp tiếp.</p>${b0}${blocks}</div>`;
 }
 function renderLesson(){
   const L = LESSONS[les.i];
@@ -4374,7 +4462,7 @@ function renderLesson(){
     <div id="les-sub" class="les-sub"><div id="les-en" class="les-en">…</div><div id="les-vi" class="les-vi"></div></div>
     <div id="les-readbox"></div>
     <div class="les-ctrl"><button class="btn-primary" onclick="playLesson()">▶ Xem / xem lại</button><button class="btn-secondary" id="les-slow" onclick="lesSlowToggle()">🐢 Chậm: tắt</button><button class="btn-secondary" id="les-subbtn" onclick="lesSubToggle()">Phụ đề: Anh + Việt</button></div>
-    <p class="sc-vi">Chạm vào một câu bên dưới để nghe lại. Chạm vào từ bất kỳ để tra cách đọc.</p><div class="les-lines">${lines}</div>
+    <p class="sc-vi">Chạm vào một câu bên dưới để nghe lại. Chạm vào từ bất kỳ để tra cách đọc.</p>${lesBasicsHtml()}<div class="les-lines">${lines}</div>
     <button class="btn-primary" style="margin-top:14px;" onclick="lesGo('chunks')">Tiếp: học khuôn câu →</button></div>`;
   }
   if(les.step==='chunks'){
@@ -4383,7 +4471,7 @@ function renderLesson(){
       ${c.ex.map(e=>`<div class="sc-alt" style="margin:6px 0 0;">${listenSlowPair(e.en)}<div class="t"><strong>${e.en}</strong><i>${e.vi}</i></div></div>`).join('')}
       ${lesExtraHtml(L,ci)}${ci===L.chunks.length-1?lesInlineHtml(L):''}
       <div class="les-how"><b>Cách dùng nhanh:</b> giữ phần đầu khuôn, chỉ thay phần <span class="slot">[ ]</span> bằng điều bạn muốn nói. Đọc to 3 lần. Không cần phân tích ngữ pháp.</div></div>`).join('');
-    return head+`<p class="sc-vi">Chỉ 4 khuôn. Nhìn khuôn → nghe ví dụ → đọc to. Cuối bài có quiz kiểm tra bạn ráp đúng chưa.</p>${lesHardHtml(L)}${ch}
+    return head+`<p class="sc-vi">Chỉ 4 khuôn. Nhìn khuôn → nghe ví dụ → đọc to. Cuối bài có quiz kiểm tra bạn ráp đúng chưa.</p>${lesBasicsHtml()}${lesHardHtml(L)}${ch}
     <button class="btn-primary" onclick="lesGo('speak')">Tiếp: nói theo →</button></div>`;
   }
   if(les.step==='speak'){
@@ -4435,12 +4523,13 @@ function renderLesson(){
     <button class="btn-secondary" onclick="lesGo('watch')">Xem lại cảnh</button><button class="btn-secondary" onclick="lesGo('quiz')">Làm lại quiz</button><button class="btn-secondary" onclick="openLessons()">Danh sách bài</button></div>`;
 }
 function homeHeroHtml(){
+  const B0 = !bsAllDone();
   const i = lesNextIdx(), L = LESSONS[i], tot=LESSONS.length, doneN = Object.keys(lesState.done).length, st = (typeof statsStreak==='function')?statsStreak():0;
   const lv = LEVELS.map(v=>`<div class="lv-pill ${lvUnlocked(v.n)?'':'lock'}"><b>${lvUnlocked(v.n)?'':'🔒 '}Cấp ${v.n}</b><span>${lvDone(v.n)}/${v.ids.length}</span></div>`).join('');
   const tiles = [['🎯','Bắn bóng','startGame()'],['🧲','Từ đi kèm','openColloc()'],['🎧','Khách thật','openReal()'],['📚','Từ ngành','openGlossary()']].map(t=>`<button class="h-tile" onclick="${t[2]}"><span>${t[0]}</span>${t[1]}</button>`).join('');
-  return `${remindBarHtml()}<div class="hero47"><div class="hero-top"><div><div class="hero-k">BÀI HÔM NAY · CẤP ${lvOf(L.id)}</div><div class="hero-t">${L.icon} ${L.title}</div><div class="hero-s">${L.sub}</div></div><div class="hero-stat"><b>🔥 ${st}</b>ngày</div></div>
+  return `${remindBarHtml()}<div class="hero47"><div class="hero-top"><div><div class="hero-k">${B0?'BƯỚC HÔM NAY · CẤP 0 NỀN TẢNG':'BÀI HÔM NAY · CẤP '+lvOf(L.id)}</div><div class="hero-t">${B0?BASICS[bsNextIdx()].icon+' '+BASICS[bsNextIdx()].t:L.icon+' '+L.title}</div><div class="hero-s">${B0?BASICS[bsNextIdx()].s+' · 3 phút':L.sub}</div></div><div class="hero-stat"><b>🔥 ${st}</b>ngày</div></div>
     <div class="les-stage mini">${lesSceneSvg(L.scene)}</div>
-    <button class="btn-primary hero-go" onclick="startLesson(${i})">▶ Học bài này (15 phút)</button>
+    ${B0?`<button class="btn-primary hero-go" onclick="startBasic(${bsNextIdx()})">▶ Học bước này (3 phút)</button><button class="btn-secondary" style="width:100%;margin-top:8px;" onclick="startLesson(${i})">Đã biết cơ bản? Vào thẳng Bài 1 →</button>`:`<button class="btn-primary hero-go" onclick="startLesson(${i})">▶ Học bài này (15 phút)</button>`}
     <div class="lv-row">${lv}</div>
     <button class="btn-secondary" style="width:100%;margin-top:8px;" onclick="openLessons()">🗺️ Lộ trình ${doneN}/${tot} bài · thi lên cấp</button>
     <div class="les-k" style="margin-top:14px;">LUYỆN NHANH 5 PHÚT</div><div class="h-tiles">${tiles}</div>
@@ -5028,6 +5117,7 @@ function render(){
   if(state.view==='ex4Done'){ app.innerHTML = renderEx4Done(); return; }
   if(state.view==='lessons'){ app.innerHTML = renderLessons(); return; }
   if(state.view==='lesson'){ app.innerHTML = renderLesson(); return; }
+  if(state.view==='basic'){ app.innerHTML = renderBasic(); return; }
   if(state.view==='frames'){ app.innerHTML = renderFrames(); return; }
   if(state.view==='frameDrill'){ app.innerHTML = renderFrameDrill(); return; }
   if(state.view==='frameDone'){ app.innerHTML = renderFrameDone(); return; }
@@ -5746,7 +5836,7 @@ function renderLoading(){
   return '<div class="loading">Đang mở sổ hộ chiếu...</div>';
 }
 
-const APP_VERSION = 'v58';
+const APP_VERSION = 'v60';
 function headerHtml(showHome){
   const strip = SKILL_ORDER.map(sk=>`<span class="visa-item">${svgIcon(SKILL_ICON[sk],14)}${SKILL_LABEL[sk]}</span>`).join('');
   return `
