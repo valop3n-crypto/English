@@ -4307,9 +4307,9 @@ const BASICS = [
   cards:[['This is our booth.','Đây là gian hàng của chúng tôi.'],['Here is my card.','Đây là danh thiếp của tôi.'],['Is this your design?','Đây là thiết kế của bạn à?'],['That is their stage.','Kia là sân khấu của họ.'],['Could I have yours?','Cho tôi xin của bạn? (yours = your card, khỏi nhắc lại)']],
   tries:[['This is ___ booth. (của chúng tôi)',['our','we','us'],0,'Trước danh từ dùng our, không dùng we.'],['Here is ___ card. (của tôi)',['I','my','me'],1,'my + danh từ = của tôi.'],['Is this ___ drawing? (của bạn)',['you','your','yours'],1,'your đứng trước danh từ.']],
   use:['Bạn đưa danh thiếp cho khách.','Here is my card. Could I have yours?','Đây là danh thiếp của tôi. Cho tôi xin của bạn nhé?']},
- {id:'m3',icon:'🧑‍🔧',t:'Ai làm gì?',s:'I / we + động từ',idea:'Câu cơ bản nhất: AI + LÀM GÌ + CÁI GÌ. Với he / she / it (một người, một thứ), động từ thêm -s.',
+ {id:'m3',icon:'🧑‍🔧',t:'Ai làm gì?',s:'I / we + động từ',idea:'Câu cơ bản nhất: AI + LÀM GÌ + CÁI GÌ. Nhớ một luật duy nhất: I / you / we / they → động từ ĐỂ NGUYÊN (design). he / she / it (một người hoặc một vật khác bạn và tôi) → động từ THÊM -s (designs).',
   cards:[['I design booths.','Tôi thiết kế gian hàng.'],['We build offices.','Chúng tôi xây văn phòng.'],['You pay thirty percent first.','Bạn trả 30% trước.'],['They install the lights.','Họ lắp đèn.'],['He checks the wall.','Anh ấy kiểm tra tường. (he → checks có -s)']],
-  tries:[['We ___ booths.',['design','designs','designing'],0,'we là số nhiều, động từ để nguyên.'],['She ___ the lights.',['check','checks','checking'],1,'she là một người → thêm -s.'],['They ___ the wall.',['paints','paint','painted'],1,'they → để nguyên động từ.']],
+  tries:[['We ___ booths.',['design','designs','designing'],0,'we = chúng tôi → thuộc nhóm I / you / we / they, động từ để nguyên. Chỉ he / she / it mới thêm -s.'],['She ___ the lights.',['check','checks','checking'],1,'she thuộc nhóm he / she / it (một người) → động từ thêm -s: checks.'],['They ___ the wall.',['paints','paint','painted'],1,'they thuộc nhóm I / you / we / they → động từ để nguyên: paint.']],
   use:['Khách hỏi: "What do you do?"','We design and build booths.','Chúng tôi thiết kế và thi công gian hàng.']},
  {id:'m4',icon:'🎨',t:'Nó thế nào?',s:'is / are + tính từ',idea:'Muốn nói "nó thế nào": thứ đó + is (một thứ) / are (nhiều thứ) + tính từ. I thì dùng am.',
   cards:[['The booth is big.','Gian hàng to.'],['The price is high.','Giá cao.'],['The lights are bright.','Đèn sáng. (nhiều đèn → are)'],['The wall looks warm.','Bức tường trông ấm.'],['I am happy with it.','Tôi hài lòng với nó.']],
@@ -6001,7 +6001,7 @@ function renderLoading(){
   return '<div class="loading">Đang mở sổ hộ chiếu...</div>';
 }
 
-const APP_VERSION = 'v63';
+const APP_VERSION = 'v64';
 function headerHtml(showHome){
   const strip = SKILL_ORDER.map(sk=>`<span class="visa-item">${svgIcon(SKILL_ICON[sk],14)}${SKILL_LABEL[sk]}</span>`).join('');
   return `
