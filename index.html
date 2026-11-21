@@ -3887,7 +3887,7 @@ function renderEx4(){
   const next = ans ? `<button class="btn-primary" onclick="ex4Next()">${ex4.pos+1>=ex4.qs.length?'Xem kết quả':'Câu tiếp →'}</button>`:'';
   return `${headerHtml(false)}<div class="pages"><button class="home-link" style="margin-bottom:12px;color:var(--navy);border-color:var(--navy);" onclick="if(confirm('Thoát bài thi? Điểm sẽ không được lưu.')) goHome()">← Thoát</button>
   <div class="item-count">${sec} · câu ${secPos}/${secQs.length} · tổng ${ex4.pos+1}/${ex4.qs.length}</div><p style="font-size:1.02rem;margin:8px 0;"><strong>${q.prompt}</strong></p>
-  ${q.say?`<div style="margin:6px 0;">${listenSlowPair(q.say)}</div>`:''}${body}${next}</div>`;
+  ${q.say?`<div style="margin:6px 0;">${listenSlowPair(q.say)}</div>`:''}${body}${ans?fullExplainHtml([q.say,q.answer,q.show,q.reveal]):''}${next}</div>`;
 }
 function renderEx4Done(){
   const f=ex4.final, prev=ex4Hist.length>1?ex4Hist[ex4Hist.length-2]:null;
@@ -4294,7 +4294,7 @@ function lesLineExHtml(id,en){
   const L = LINE_EX[id]; if(!L) return lesSentHtml(en);
   const slot = t=>t.replace(/\[[^\]]*\]/g,m=>`<span class="slot">${m}</span>`);
   const row = a=>`<div class="sc-alt" style="margin:4px 0 0;">${listenSlowPair(a[0])}<div class="t"><strong>${a[0]}</strong><i>${a[1]||''}</i></div></div>`;
-  return L.map(o=>`<div class="lx-s"><div class="lx-f">🧩 ${slot(o.f)}</div><div class="lx-y">${o.why}</div><div class="lx-r">⚡ Ráp nhanh: ${o.rule}</div><div class="lx-k">NÓI KHÁC ĐƯỢC KHÔNG?</div>${row(o.alt)}<div class="lx-k">VÍ DỤ NỮA</div>${row(o.ex)}</div>`).join('');
+  return L.map(o=>`<div class="lx-s"><div class="lx-f">🧩 ${slot(o.f)}</div><div class="lx-y">${o.why}</div><div class="lx-r">⚡ Ráp nhanh: ${o.rule}</div><div class="lx-k">NÓI KHÁC ĐƯỢC KHÔNG?</div>${row(o.alt)}<div class="lx-k">VÍ DỤ NỮA</div>${row(o.ex)}</div>`).join('')+fxFastHtml(en);
 }
 
 /* ============ CẤP 0 · NỀN TẢNG (học như trẻ con: nhỏ · dễ · dùng được ngay) ============ */
@@ -4507,6 +4507,31 @@ function renderWeak(){
   ${L.length?L.map(m=>`<div class="sc-card" style="margin-bottom:8px;"><div class="sc-alt" style="margin:0;">${listenSlowPair(m.t)}<div class="t"><strong>${m.t}</strong><i>lần cuối ${m.last}% · tốt nhất ${m.best}%</i></div></div></div>`).join(''):'<div class="sc-card">Chưa có câu nào cần ôn. Hãy bấm 🎙️ cạnh các câu trong bài để luyện nói.</div>'}</div>`;
 }
 
+/* ============ GIẢI THÍCH ĐẦY ĐỦ SAU MỖI CÂU (khuôn · nói khác · nói lướt · đồng nghĩa · đọc) ============ */
+const FX = {};
+function fxBuild(){ if(FX.done) return; FX.done=1; FX.lines={}; FX.chunks={};
+  LESSONS.forEach(l=>{ l.lines.forEach((x,k)=>{ FX.lines[spkKey(x.en)]={id:l.id,k}; }); l.chunks.forEach((c,ci)=>c.ex.forEach(e=>{ FX.chunks[spkKey(e.en)]={l,ci}; })); }); }
+function fxEnglish(arr){ const out=[]; arr.forEach(t=>{ if(!t) return; String(t).split(/ → | = | — |\s+\(khuôn:/).forEach(p=>{ p=p.trim(); if(p && !/[àáạảãâăđêôơưèéìíòóùúỳýỵ]/i.test(p) && /[a-z]/i.test(p)) out.push(p); }); }); return Array.from(new Set(out)); }
+function fxFastHtml(T){
+  const low=' '+T.toLowerCase().replace(/[.,?!]/g,'')+' ', h=[];
+  FAST_REDUCE.filter(it=>low.indexOf(' '+it[0].toLowerCase().split(' / ')[0]+' ')>=0).slice(0,3).forEach(it=>h.push(`<div class="lx-y">🗣️ <b>${it[0]}</b> → người thật nói <b style="color:#e0541f;">${it[1]}</b> (đọc bồi: ${it[2]})</div>`));
+  FAST_LINK.filter(it=>{ if(/^(for \/ to|can \/ can)/.test(it[0])) return false; const f=it[0].toLowerCase().split(' / ')[0]; return low.indexOf(' '+f+' ')>=0; }).slice(0,2).forEach(it=>h.push(`<div class="lx-y">🔗 <b>${it[0].split(' / ')[0]}</b> → nghe như <b>${it[1].split(' / ')[0]}</b>. ${it[3]}</div>`));
+  const syn=[]; FAST_SYN.forEach(it=>{ if([it[1],it[2],it[3]].some(w=>{ try{ return new RegExp('\\b'+w.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'\\b','i').test(T); }catch(e){ return false; } })) syn.push(it); });
+  syn.slice(0,2).forEach(it=>h.push(`<div class="lx-y">🔁 <b>${it[0]}</b>: 😎 ${it[1]} · 🙂 ${it[2]} · 🎩 ${it[3]}</div>`));
+  return h.length?`<div class="lx-k">NGƯỜI THẬT NÓI LƯỚT · ĐỒNG NGHĨA</div>${h.join('')}`:'';
+}
+function fullExplainHtml(parts){
+  fxBuild();
+  const texts=fxEnglish(parts).slice(0,2); if(!texts.length) return '';
+  const blocks=texts.map(T=>{
+    const key=spkKey(T); let core='';
+    if(FX.lines[key]) core=lesLineExHtml(FX.lines[key].id+'.'+FX.lines[key].k,T);
+    else if(FX.chunks[key]){ const o=FX.chunks[key]; core=`<div class="lx-s"><div class="lx-f">🧩 Khuôn: ${o.l.chunks[o.ci].p.replace(/\[[^\]]*\]/g,m=>`<span class="slot">${m}</span>`)}</div><div class="lx-y">${o.l.chunks[o.ci].vi}</div>${lesExtraHtml(o.l,o.ci)}</div>`; }
+    return `<div class="lx-s"><div class="lx-en">${T} ${listenSlowPair(T)}</div>${core}${FX.lines[key]?'':fxFastHtml(T)}${lesReadHtml(T)}</div>`;
+  }).join('');
+  return `<details class="lx" open style="margin:10px 0;"><summary>📖 Giải thích đầy đủ</summary>${blocks}</details>`;
+}
+
 let les = null;
 function openLessons(){ state.view='lessons'; render(); }
 function startLesson(i, step){ if(!lvUnlocked(lvOf(LESSONS[i].id))){ openLessons(); return; } stopLesson(); les = {i, step:step||'watch', token:0, sub:0, slow:false, pos:0, picked:null, right:0, spk:null, qs:null, rung:1, bld:null, hint:false}; state.view='lesson'; render(); window.scrollTo(0,0); if(les.step==='watch') setTimeout(playLesson,500); }
@@ -4676,7 +4701,7 @@ function renderLesson(){
     const opts=q.opts.map((o,k)=>{ let cls='sim-opt'; if(ans){ if(o.ok) cls+=' ok'; else if(k===les.picked) cls+=' no'; } return `<button class="${cls}" ${ans?'disabled':`onclick="lesPick(${k})"`}>${o.t}</button>`; }).join('');
     const fb=ans?`<div class="sim-bubble me">${q.opts[les.picked].ok?'✅ Đúng! ':'❌ Chưa đúng. '}<span class="sc-vi">${q.reveal}</span></div><button class="btn-primary" onclick="lesNextQ()">${les.pos+1>=les.qs.length?'Xem kết quả':'Câu tiếp →'}</button>`:'';
     return head+`<div class="item-count">Quiz · ${les.pos+1}/${les.qs.length}</div><p style="font-size:1.02rem;margin:8px 0;"><strong>${q.prompt}</strong></p>
-    ${q.say?`<div style="margin:6px 0;">${listenSlowPair(q.say)}</div>`:''}${opts}${fb}</div>`;
+    ${q.say?`<div style="margin:6px 0;">${listenSlowPair(q.say)}</div>`:''}${opts}${ans?fullExplainHtml([q.say,q.reveal]):''}${fb}</div>`;
   }
   const next = LESSONS[les.i+1];
   return head+`<div style="text-align:center;"><div style="font-size:3rem;">${les.pct>=60?'🏅':'💪'}</div><h2 class="intro-title" style="justify-content:center;">${les.pct>=60?'Hoàn thành bài!':'Gần được rồi'}</h2>
@@ -6001,7 +6026,7 @@ function renderLoading(){
   return '<div class="loading">Đang mở sổ hộ chiếu...</div>';
 }
 
-const APP_VERSION = 'v64';
+const APP_VERSION = 'v65';
 function headerHtml(showHome){
   const strip = SKILL_ORDER.map(sk=>`<span class="visa-item">${svgIcon(SKILL_ICON[sk],14)}${SKILL_LABEL[sk]}</span>`).join('');
   return `
