@@ -555,6 +555,9 @@ body{ background:linear-gradient(180deg,#141c47,#1d2b64 40%,#f6f7fb 40%); }
 .hero-k{ font-size:.72rem; font-weight:800; letter-spacing:1.5px; color:var(--gold); } .hero-t{ font-size:1.25rem; font-weight:800; color:var(--navy); line-height:1.25; margin-top:2px; } .hero-s{ color:var(--ink-soft); font-size:.9rem; margin-top:2px; }
 .hero-stat{ text-align:center; background:#fff3ec; border-radius:14px; padding:8px 10px; font-size:.75rem; color:var(--ink-soft); white-space:nowrap; } .hero-stat b{ display:block; font-size:1.05rem; color:var(--gold); }
 .hero-go{ width:100%; margin-top:12px; font-size:1.05rem; }
+.les-mic{ font-size:.8rem; color:var(--ink-soft); margin:2px 6px 0; display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+.mic-w{ display:inline-flex; align-items:center; gap:4px; } .mic-b.rec{ background:#ff4d4d; animation:pulse 1s infinite; } .mic-p{ font-size:.8rem; padding:2px 6px; border-radius:8px; background:#eee; } .mic-p.g{ background:#d6f5df; color:#157a3a; } .mic-p.m{ background:#fff0c9; color:#8a6100; } .mic-p.b{ background:#ffe0e0; color:#b3261e; } .mic-n{ font-size:.72rem; color:var(--ink-soft); font-style:normal; max-width:150px; }
+@keyframes pulse{ 0%,100%{ opacity:1 } 50%{ opacity:.5 } }
 .h-tiles{ display:grid; grid-template-columns:repeat(5,1fr); gap:8px; margin-top:12px; }
 .h-tile{ background:var(--cream-2); border:none; border-radius:16px; padding:10px 4px; font-weight:700; color:var(--navy); font-size:.85rem; cursor:pointer; } .h-tile span{ display:block; font-size:1.5rem; }
 .more47{ margin-top:10px; } .more47>summary{ cursor:pointer; font-weight:700; color:var(--stamp); padding:12px 14px; background:#fff; border-radius:16px; border:1px solid var(--line); list-style:none; } .more47[open]>summary{ margin-bottom:12px; }
@@ -2678,7 +2681,7 @@ function openHardList(){ state.view='hardlist'; render(); }
 function speakSlow(t){ speak(t, undefined, undefined, 0.55); }
 function listenSlowPair(t){
   const q = t.replace(/'/g,"\\'");
-  return `<span style="display:inline-flex;gap:4px;vertical-align:middle;"><button class="phrase-play" onclick="speak('${q}')" title="Nghe">${svgIcon('headphones',16)}</button><button class="phrase-play" onclick="speakSlow('${q}')" title="Nghe chậm">🐢</button></span>`;
+  return `<span style="display:inline-flex;gap:4px;vertical-align:middle;"><button class="phrase-play" onclick="speak('${q}')" title="Nghe">${svgIcon('headphones',16)}</button><button class="phrase-play" onclick="speakSlow('${q}')" title="Nghe chậm">🐢</button>${micWidget(t)}</span>`;
 }
 function renderPronHub(){
   const cards = [
@@ -4443,6 +4446,46 @@ function renderFast(){
   return head+`<button class="btn-primary" style="margin:6px 0 12px;" onclick="fastQuiz()">🎯 Thử nhanh 5 câu</button>${body}</div>`;
 }
 
+/* ============ GHI ÂM NÓI LẠI MỌI CÂU · NHỚ ĐIỂM · ÔN CÂU YẾU ============ */
+let spkMem = {};
+async function loadSpk(){ try{ const r = await window.storage.get('spk:v1', false); if(r) spkMem = JSON.parse(r.value)||{}; }catch(e){} }
+function saveSpk(){ try{ window.storage.set('spk:v1', JSON.stringify(spkMem), false); }catch(e){} }
+function spkKey(t){ return t.toLowerCase().replace(/[^a-z0-9' ]/g,'').replace(/\s+/g,' ').trim(); }
+function micBadge(m){ return m ? `<b class="mic-p ${m.best>=80?'g':(m.best>=60?'m':'b')}" title="Điểm cao nhất · ${m.n} lần">${m.best}%</b>` : ''; }
+function micWidget(t){
+  if(!t || t.length>160) return '';
+  return `<span class="mic-w" data-t="${encodeURIComponent(t)}"><button class="phrase-play mic-b" onclick="micSay(this)" title="Ghi âm nói lại và chấm điểm">🎙️</button><span class="mic-s">${micBadge(spkMem[spkKey(t)])}</span></span>`;
+}
+function micSay(btn){
+  const w=btn.parentNode, t=decodeURIComponent(w.dataset.t), s=w.querySelector('.mic-s');
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if(!SR){ s.innerHTML='<i class="mic-n">Mở app bằng Chrome để dùng mic</i>'; return; }
+  if(recognizing) return;
+  try{ speechSynthesis.cancel(); }catch(e){}
+  const r=new SR(); r.lang='en-US'; r.interimResults=false; r.maxAlternatives=3;
+  recognizing=true; btn.classList.add('rec'); s.innerHTML='<i class="mic-n">đang nghe… hãy nói</i>'; let settled=false;
+  const done=()=>{ recognizing=false; btn.classList.remove('rec'); };
+  const to=setTimeout(()=>{ if(settled) return; settled=true; done(); try{r.abort();}catch(e){} s.innerHTML='<i class="mic-n">Không nghe được, thử lại</i>'; },7000);
+  r.onresult=e=>{
+    if(settled) return; settled=true; clearTimeout(to); done();
+    let best=0, heard=''; for(let a=0;a<e.results[0].length;a++){ const tx=e.results[0][a].transcript, g=gradeFreeText(tx,[t]); if(g.pct>=best){ best=g.pct; heard=tx; } }
+    const k=spkKey(t), m=spkMem[k]||{t:t,best:0,n:0}; m.t=t; m.last=best; m.best=Math.max(m.best,best); m.n++; m.d=localDay(); spkMem[k]=m; saveSpk();
+    const ok=best>=70; sfx(ok?'ok':'bad'); skillLog('S',ok); if(ok) addXP(1);
+    s.innerHTML=`<b class="mic-p ${ok?'g':(best>=50?'m':'b')}">${best}% ${ok?'✓':'↻'}</b> <i class="mic-n">nghe được: "${heard}" · tốt nhất ${m.best}%</i>`;
+  };
+  r.onerror=()=>{ if(settled) return; settled=true; clearTimeout(to); done(); s.innerHTML='<i class="mic-n">Không nghe được, thử lại</i>'; };
+  r.onend=()=>{ done(); };
+  try{ r.start(); }catch(e){ settled=true; clearTimeout(to); done(); s.innerHTML='<i class="mic-n">Không bật được mic</i>'; }
+}
+function weakList(){ return Object.values(spkMem).filter(m=>m.best<80).sort((a,b)=>(a.last||0)-(b.last||0)); }
+function openWeak(){ state.view='weak'; render(); window.scrollTo(0,0); }
+function renderWeak(){
+  const L=weakList(), all=Object.values(spkMem), good=all.filter(m=>m.best>=80).length;
+  return `${headerHtml(false)}<div class="pages"><button class="home-link" style="margin-bottom:10px;color:var(--navy);border-color:var(--navy);" onclick="goHome()">← Trang chủ</button><h2 class="intro-title">🎙️ Câu cần ôn</h2>
+  <p class="sc-vi">Đã luyện ${all.length} câu · ${good} câu đạt từ 80%. Dưới đây là những câu điểm cao nhất còn dưới 80%. Bấm 🎙️, nói lại, đạt 80% là câu tự rời khỏi danh sách.</p>
+  ${L.length?L.map(m=>`<div class="sc-card" style="margin-bottom:8px;"><div class="sc-alt" style="margin:0;">${listenSlowPair(m.t)}<div class="t"><strong>${m.t}</strong><i>lần cuối ${m.last}% · tốt nhất ${m.best}%</i></div></div></div>`).join(''):'<div class="sc-card">Chưa có câu nào cần ôn. Hãy bấm 🎙️ cạnh các câu trong bài để luyện nói.</div>'}</div>`;
+}
+
 let les = null;
 function openLessons(){ state.view='lessons'; render(); }
 function startLesson(i, step){ if(!lvUnlocked(lvOf(LESSONS[i].id))){ openLessons(); return; } stopLesson(); les = {i, step:step||'watch', token:0, sub:0, slow:false, pos:0, picked:null, right:0, spk:null, qs:null, rung:1, bld:null, hint:false}; state.view='lesson'; render(); window.scrollTo(0,0); if(les.step==='watch') setTimeout(playLesson,500); }
@@ -4555,7 +4598,7 @@ function renderLesson(){
   const head = `${headerHtml(false)}<div class="pages"><button class="home-link" style="margin-bottom:10px;color:var(--navy);border-color:var(--navy);" onclick="stopLesson();openLessons()">← Danh sách bài</button>
     <div class="item-count">${L.icon} Bài ${les.i+1}. ${L.title}</div>${lesStepsBar()}`;
   if(les.step==='watch'){
-    const lines = L.lines.map((x,k)=>`<div class="les-lw"><button class="les-line ${x.w==='Y'?'you':''}" onclick="lesTap(${k})"><b>${x.w==='Y'?L.you+' (bạn)':L.client}</b>${x.en}<i>${x.vi}</i></button><details class="lx"><summary>💡 Cấu trúc · vì sao · nói khác · ví dụ</summary>${lesLineExHtml(L.id+'.'+k,x.en)}</details></div>`).join('');
+    const lines = L.lines.map((x,k)=>`<div class="les-lw"><button class="les-line ${x.w==='Y'?'you':''}" onclick="lesTap(${k})"><b>${x.w==='Y'?L.you+' (bạn)':L.client}</b>${x.en}<i>${x.vi}</i></button><div class="les-mic">🎙️ Ghi âm nói lại câu này: ${micWidget(x.en)}</div><details class="lx"><summary>💡 Cấu trúc · vì sao · nói khác · ví dụ</summary>${lesLineExHtml(L.id+'.'+k,x.en)}</details></div>`).join('');
     return head+`<div class="les-stage">${lesSceneSvg(L.scene)}</div>
     <div id="les-sub" class="les-sub"><div id="les-en" class="les-en">…</div><div id="les-vi" class="les-vi"></div></div>
     <div id="les-readbox"></div>
@@ -4630,7 +4673,7 @@ function homeHeroHtml(){
     ${B0?`<button class="btn-primary hero-go" onclick="startBasic(${bsNextIdx()})">▶ Học bước này (3 phút)</button><button class="btn-secondary" style="width:100%;margin-top:8px;" onclick="startLesson(${i})">Đã biết cơ bản? Vào thẳng Bài 1 →</button>`:`<button class="btn-primary hero-go" onclick="startLesson(${i})">▶ Học bài này (15 phút)</button>`}
     <div class="lv-row">${lv}</div>
     <button class="btn-secondary" style="width:100%;margin-top:8px;" onclick="openLessons()">🗺️ Lộ trình ${doneN}/${tot} bài · thi lên cấp</button>
-    <div class="les-k" style="margin-top:14px;">LUYỆN NHANH 5 PHÚT</div><div class="h-tiles">${tiles}</div>
+    <div class="les-k" style="margin-top:14px;">LUYỆN NHANH 5 PHÚT</div><div class="h-tiles">${tiles}</div>${weakList().length?`<button class="btn-secondary" style="width:100%;margin-top:8px;" onclick="openWeak()">🎙️ Ôn ${weakList().length} câu nói chưa đạt 80%</button>`:''}
     <button class="btn-secondary" style="width:100%;margin-top:8px;" onclick="openEx4()">🏆 Thi tổng hợp 4 kỹ năng</button></div>`;
 }
 
@@ -5215,6 +5258,7 @@ function render(){
   if(state.view==='ex4Done'){ app.innerHTML = renderEx4Done(); return; }
   if(state.view==='lessons'){ app.innerHTML = renderLessons(); return; }
   if(state.view==='lesson'){ app.innerHTML = renderLesson(); return; }
+  if(state.view==='weak'){ app.innerHTML = renderWeak(); return; }
   if(state.view==='fast'){ app.innerHTML = renderFast(); return; }
   if(state.view==='basic'){ app.innerHTML = renderBasic(); return; }
   if(state.view==='frames'){ app.innerHTML = renderFrames(); return; }
@@ -5935,7 +5979,7 @@ function renderLoading(){
   return '<div class="loading">Đang mở sổ hộ chiếu...</div>';
 }
 
-const APP_VERSION = 'v61';
+const APP_VERSION = 'v62';
 function headerHtml(showHome){
   const strip = SKILL_ORDER.map(sk=>`<span class="visa-item">${svgIcon(SKILL_ICON[sk],14)}${SKILL_LABEL[sk]}</span>`).join('');
   return `
@@ -6351,7 +6395,7 @@ function renderResults(){
   await loadAiKey();
   await loadSrs();
   await loadPlan();
-  await loadStages(); await loadLessons(); await loadRemind(); await loadEx4(); if(!remindTimer) remindTimer = setInterval(remindTick, 60000);
+  await loadStages(); await loadLessons(); await loadRemind(); await loadEx4(); await loadSpk(); if(!remindTimer) remindTimer = setInterval(remindTick, 60000);
   await loadSfx();
   await loadStats();
   state.loading = false;
