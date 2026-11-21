@@ -3214,6 +3214,7 @@ function lexPopupHtml(res){
   let stress = '';
   if(e.st) stress = `<div><strong>Cách nhấn:</strong> ${e.st}</div>`;
   else if(ip) stress = ip.total<=1 ? `<div><strong>Cách nhấn:</strong> từ 1 âm tiết</div>` : (ip.pos? `<div><strong>Cách nhấn:</strong> âm tiết thứ ${ip.pos} (trong ${ip.total} âm tiết)</div>`:'');
+  if(e.ipa){ const vb = ipaViet(e.ipa); if(vb) stress += `<div><strong>Đọc bồi:</strong> <span style="font-size:1.1rem;font-weight:700;color:#e0541f;">${vb}</span> <span class="sc-vi">(chữ HOA = nhấn, đọc gần đúng)</span></div>`; }
   const forms = (res.key && res.key!==res.form) ? `<div class="sc-vi">dạng của: <strong>${res.key}</strong></div>` : '';
   const syn = (e.syn&&e.syn.length) ? `<div style="margin-top:8px;"><strong>Đồng nghĩa hay gặp:</strong> ${e.syn.map(s=>`<span class="sc-chip" style="padding:3px 10px;cursor:pointer;" onclick="lookupWord('${s.replace(/'/g,"\\'")}')">${s}</span>`).join('')}</div>` : '';
   const exs = lexExamples(w).map(p=>`<div class="sc-alt" style="margin-top:6px;">${listenIconPairHtml(p.en,'phrase-play','style="width:28px;height:28px;min-width:28px;"')}<div class="t">${p.en}<i>${p.vi}</i></div></div>`).join('');
@@ -3537,6 +3538,57 @@ function lesSceneSvg(scene){
   const y = lesPerson(265, true, '#f1c9a5', '#1a1410', '#2b4c6f', scene==='site'?hat:(scene==='phone'?hat:''));
   return `<svg viewBox="0 0 360 200" class="les-svg" xmlns="http://www.w3.org/2000/svg">${bg}<g id="les-c">${c}</g><g id="les-y">${y}</g></svg>`;
 }
+/* ============ ĐỌC BỒI (IPA → CÁCH ĐỌC KIỂU TIẾNG VIỆT) ============ */
+const IV_MULTI = ['tʃ','dʒ','aɪ','eɪ','ɔɪ','aʊ','oʊ','ɑː','iː','uː','ɔː','ɜː'];
+const IV_VOW = {'iː':'i','i':'i','ɪ':'i','e':'e','ɛ':'e','æ':'e','ɑː':'a','ɑ':'a','ɒ':'o','ɔː':'o','ɔ':'o','o':'ô','ʊ':'u','u':'u','uː':'u','ʌ':'â','ə':'ờ','ɚ':'ơ','ɝ':'ơ','ɜː':'ơ','a':'a','aɪ':'ai','eɪ':'ây','ɔɪ':'oi','aʊ':'ao','oʊ':'âu'};
+const IV_CON = {'p':'p','b':'b','t':'t','d':'đ','k':'k','ɡ':'g','g':'g','f':'ph','v':'v','θ':'th','ð':'đ','s':'x','z':'z','ʃ':'s','ʒ':'gi','h':'h','tʃ':'ch','dʒ':'gi','m':'m','n':'n','ŋ':'ng','l':'l','r':'r','w':'w','j':'y'};
+const IV_ONSET = new Set(['st','sp','sk','tr','pr','kr','br','dr','gr','fr','pl','bl','kl','gl','fl','sl','str','spr','skr','sw','tw','kw','θr','ʃr']);
+function ipaViet(ipa){
+  const s = ipa.replace(/[\/\[\]()]/g,'').replace(/ː(?![^])/g,'ː');
+  const toks = [];
+  for(let i=0;i<s.length;){
+    const two = s.substr(i,2);
+    if(IV_MULTI.indexOf(two)>=0){ toks.push(two); i+=2; continue; }
+    const c = s[i]; i++;
+    if(c==='ː') continue;
+    if(c==='ˈ'||c==='ˌ'){ toks.push(c); continue; }
+    if(IV_VOW[c]!==undefined || IV_CON[c]!==undefined) toks.push(c);
+  }
+  // nuclei
+  const isV = t=>IV_VOW[t]!==undefined && !(t in IV_CON && IV_CON[t]!==undefined && t.length===1 && 'wj'.indexOf(t)>=0);
+  const sylls = []; let cur = null, stressTok = -1, stressSyl = -1, run = [];
+  const flushRun = ()=>{ run = []; };
+  // assign tokens to syllables
+  const vIdx = []; toks.forEach((t,k)=>{ if(t!=='ˈ' && t!=='ˌ' && IV_VOW[t]!==undefined) vIdx.push(k); });
+  if(!vIdx.length) return '';
+  const bounds = []; // start index of each syllable (token index)
+  vIdx.forEach((vi,n)=>{
+    if(n===0){ bounds.push(0); return; }
+    const prev = vIdx[n-1]; let a = prev+1, b = vi; // tokens between
+    const mids = []; for(let k=a;k<b;k++) if(toks[k]!=='ˈ' && toks[k]!=='ˌ') mids.push(k);
+    let start = b; // default: boundary right before vowel
+    if(mids.length){
+      let onset = [mids[mids.length-1]];
+      while(onset.length<mids.length){
+        const cand = [mids[mids.length-1-onset.length]].concat(onset).map(k=>toks[k]).join('');
+        if(IV_ONSET.has(cand)) onset.unshift(mids[mids.length-1-onset.length]); else break;
+      }
+      start = onset[0];
+    } else start = b;
+    // include stress marks directly before onset
+    while(start-1>prev && (toks[start-1]==='ˈ'||toks[start-1]==='ˌ')) start--;
+    bounds.push(start);
+  });
+  const out = [];
+  bounds.forEach((st,n)=>{
+    const en = n+1<bounds.length ? bounds[n+1] : toks.length; let txt='', primary=false;
+    for(let k=st;k<en;k++){ const t=toks[k]; if(t==='ˈ'){ primary=true; continue; } if(t==='ˌ') continue; txt += (IV_VOW[t]!==undefined ? IV_VOW[t] : (IV_CON[t]||'')); }
+    out.push({txt, primary});
+  });
+  const hasPrimary = out.some(o=>o.primary);
+  return out.map(o=> (o.primary || out.length===1) ? o.txt.toUpperCase() : o.txt).join('-').replace(/GII/g,'GI').replace(/gii/g,'gi');
+}
+
 /* ============ CÁCH ĐỌC: NHẤN, NỐI ÂM, ÂM CUỐI ============ */
 const LES_FW = new Set('a an the and or but to of in on at for with from by is are was were be been am i you he she we they it me my your our their this that these those do does did can could will would should may might shall not no so if as than then there here what who how when where which please just also very'.split(' '));
 function lesStressHtml(en){
@@ -3563,10 +3615,18 @@ function lesEndHints(en){
   const ws = en.toLowerCase().replace(/[^a-z' ]/g,'').split(/\s+/).filter(w=>w.length>=4 && /[tdkps]$/.test(w) && !/(ss|ous)$/.test(w));
   return Array.from(new Set(ws)).slice(0,4);
 }
+function lesWordsHtml(en){
+  const seen=new Set(), items=[];
+  en.split(/\s+/).forEach(tok=>{ const w=tok.toLowerCase().replace(/[^a-z']/g,''); if(!w||seen.has(w)||LES_FW.has(w)) return; seen.add(w);
+    const r=lexFind(w); if(r&&r.entry&&r.entry.ipa){ const vb=ipaViet(r.entry.ipa); if(vb) items.push({w,vb}); } });
+  if(!items.length) return '';
+  return `<div class="les-rn">🗣️ <b>Cách đọc từng từ:</b> ${items.slice(0,7).map(x=>`<span class="sc-chip" style="padding:2px 9px;cursor:pointer;" onclick="speak('${x.w}')">${x.w} → <b style="color:#e0541f;">${x.vb}</b></span>`).join(' ')}</div>`;
+}
 function lesReadHtml(en){
   const links = lesLinkHints(en), ends = lesEndHints(en);
   return `<div class="les-read"><div class="les-rl">${lesStressHtml(en)}</div>
     <div class="les-rn">Chữ <b>đậm</b> = nhấn, nói to và rõ. Chữ mờ = nói nhanh, nhẹ.</div>
+    ${lesWordsHtml(en)}
     ${links.length?`<div class="les-rn">🔗 <b>Người bản xứ nối âm:</b> ${links.join(' · ')}</div>`:''}
     ${ends.length?`<div class="les-rn">⚠️ <b>Đọc rõ âm cuối:</b> ${ends.map(w=>`<span class="sc-chip" style="padding:1px 8px;">${w}</span>`).join(' ')}</div>`:''}</div>`;
 }
@@ -3581,7 +3641,7 @@ function lesHardWords(L){
 }
 function lesHardHtml(L){
   const hw = lesHardWords(L); if(!hw.length) return '';
-  return `<div class="sc-card"><div class="les-k">TỪ DỄ ĐỌC SAI TRONG BÀI</div>${hw.map(h=>`<div class="sc-alt" style="margin:6px 0 0;">${listenSlowPair(h.w)}<div class="t"><strong>${h.w}</strong> <span style="font-family:var(--font-mono);color:var(--ink-soft);">${h.ipa}</span><i>nhấn âm tiết thứ ${h.pos}/${h.total} · ${h.vi}</i></div></div>`).join('')}</div>`;
+  return `<div class="sc-card"><div class="les-k">TỪ DỄ ĐỌC SAI TRONG BÀI</div>${hw.map(h=>`<div class="sc-alt" style="margin:6px 0 0;">${listenSlowPair(h.w)}<div class="t"><strong>${h.w}</strong> <span style="font-family:var(--font-mono);color:var(--ink-soft);">${h.ipa}</span><i>Đọc bồi: <b style="color:#e0541f;">${ipaViet(h.ipa)}</b> · ${h.vi}</i></div></div>`).join('')}</div>`;
 }
 function lesExtraHtml(L,ci){
   const x = CHUNK_EXTRA[L.id+'.k'+(ci+1)]; if(!x) return '';
@@ -5032,7 +5092,7 @@ function renderLoading(){
   return '<div class="loading">Đang mở sổ hộ chiếu...</div>';
 }
 
-const APP_VERSION = 'v49';
+const APP_VERSION = 'v50';
 function headerHtml(showHome){
   const strip = SKILL_ORDER.map(sk=>`<span class="visa-item">${svgIcon(SKILL_ICON[sk],14)}${SKILL_LABEL[sk]}</span>`).join('');
   return `
