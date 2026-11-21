@@ -555,7 +555,7 @@ body{ background:linear-gradient(180deg,#141c47,#1d2b64 40%,#f6f7fb 40%); }
 .hero-k{ font-size:.72rem; font-weight:800; letter-spacing:1.5px; color:var(--gold); } .hero-t{ font-size:1.25rem; font-weight:800; color:var(--navy); line-height:1.25; margin-top:2px; } .hero-s{ color:var(--ink-soft); font-size:.9rem; margin-top:2px; }
 .hero-stat{ text-align:center; background:#fff3ec; border-radius:14px; padding:8px 10px; font-size:.75rem; color:var(--ink-soft); white-space:nowrap; } .hero-stat b{ display:block; font-size:1.05rem; color:var(--gold); }
 .hero-go{ width:100%; margin-top:12px; font-size:1.05rem; }
-.h-tiles{ display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-top:12px; }
+.h-tiles{ display:grid; grid-template-columns:repeat(5,1fr); gap:8px; margin-top:12px; }
 .h-tile{ background:var(--cream-2); border:none; border-radius:16px; padding:10px 4px; font-weight:700; color:var(--navy); font-size:.85rem; cursor:pointer; } .h-tile span{ display:block; font-size:1.5rem; }
 .more47{ margin-top:10px; } .more47>summary{ cursor:pointer; font-weight:700; color:var(--stamp); padding:12px 14px; background:#fff; border-radius:16px; border:1px solid var(--line); list-style:none; } .more47[open]>summary{ margin-bottom:12px; }
 .les-stage{ border-radius:18px; overflow:hidden; background:#fff; margin:10px 0; box-shadow:0 6px 18px rgba(40,50,110,.12); } .les-stage.mini{ margin:12px 0 0; }
@@ -4345,6 +4345,104 @@ function renderBasic(){
   <p class="sc-vi">Đọc to câu trên 3 lần, như đang nói với khách thật. Muốn chấm điểm thì vào bước Nói của các bài ở Cấp 1.</p><button class="btn-primary" onclick="bsFinish()">Xong bước này ✓ ${bs.i+1<BASICS.length?'→ bước tiếp theo':''}</button></div>`;
 }
 
+/* ============ KHO NÓI LƯỚT · NUỐT ÂM · ĐỒNG NGHĨA ============ */
+const FAST_REDUCE = [
+ ['going to','gonna','GÂ-nờ','sắp / định (nói nhanh)','I\'m gonna send it today.','Hôm nay tôi sẽ gửi nó.'],
+ ['want to','wanna','OA-nờ','muốn','We wanna open in May.','Chúng tôi muốn khai trương tháng 5.'],
+ ['got to / have to','gotta','GÁ-đờ','phải','We gotta finish by Friday.','Chúng tôi phải xong trước thứ Sáu.'],
+ ['have to','hafta','HÁP-tờ','phải','We hafta book it in advance.','Chúng tôi phải đặt trước.'],
+ ['let me','lemme','LEM-mi','để tôi …','Lemme check with my team.','Để tôi hỏi đội.'],
+ ['give me','gimme','GIM-mi','cho tôi','Can you gimme a quote?','Bạn cho tôi báo giá được không?'],
+ ['kind of','kinda','KAI-nờ-đờ','hơi, khá','It\'s kinda expensive.','Cái này hơi đắt.'],
+ ['a lot of','a lotta','ờ LÁ-đờ','nhiều','We have a lotta projects.','Chúng tôi có nhiều dự án.'],
+ ['out of','outta','AU-đờ','hết / ra khỏi','We\'re outta time.','Chúng ta hết thời gian rồi.'],
+ ['I don\'t know','I dunno','ai đờ-NÂU','tôi không biết','I dunno, lemme ask.','Tôi không biết, để tôi hỏi.'],
+ ['do you','d\'you','ĐIU','bạn có … không','D\'you have a budget?','Bạn có ngân sách chưa?'],
+ ['did you','didja','ĐÍT-chờ','bạn đã … chưa','Didja get the file?','Bạn nhận file chưa?'],
+ ['what do you','whaddaya','OÁT-đờ-giờ','bạn … gì','Whaddaya think?','Bạn nghĩ sao?'],
+ ['what are you','whatcha','OÁT-chờ','bạn đang … gì','Whatcha looking for?','Bạn đang tìm gì?'],
+ ['got you','gotcha','GỐT-chờ','hiểu rồi','Gotcha, I\'ll send it.','Hiểu rồi, tôi sẽ gửi.'],
+ ['could have','coulda','KUT-đờ','lẽ ra có thể','We coulda finished earlier.','Lẽ ra chúng ta xong sớm hơn.'],
+ ['should have','shoulda','SHUT-đờ','lẽ ra nên','We shoulda confirmed earlier.','Lẽ ra ta nên xác nhận sớm hơn.'],
+ ['you know','y\'know','GIU-nâu','bạn biết đấy / à','It\'s, y\'know, a wood wall.','Nó là, bạn biết đấy, một bức tường gỗ.']
+];
+const FAST_LINK = [
+ ['check it out','che-ki-TAUT','Chờ-KÍ-tau','Phụ âm cuối nối vào nguyên âm đầu của từ sau: check + it + out nghe như một từ.','Check it out.','Xem thử đi.'],
+ ['pick it up','pi-ki-TỚP','pi-KÍ-tớp','pick + it nối thành "pi-kit"','I\'ll pick it up tomorrow.','Mai tôi lấy.'],
+ ['turn it on','tơ-ni-TON','TƠN-nit-on','n nối vào it','Turn it on, please.','Bật nó lên nhé.'],
+ ['an hour','a-NAU-ờ','ờ-NAU-ờ','h câm: an hour nghe như "a-nour"','It takes an hour.','Mất một giờ.'],
+ ['next week','nex WIK','NEKS-wik','t cuối bị nuốt khi sau nó là phụ âm','See you next week.','Hẹn tuần sau.'],
+ ['first floor','fơs FLO','FƠS-flo','t cuối bị nuốt','It is on the first floor.','Nó ở tầng 1.'],
+ ['last night','las NAIT','LAS-nait','t cuối bị nuốt','I sent it last night.','Tối qua tôi gửi rồi.'],
+ ['need to','NI-tờ','NÍ-đờ','to đọc yếu thành "tờ"','We need to check it.','Chúng ta cần kiểm tra.'],
+ ['water / better / meeting','WA-đờ / BE-đờ / MI-đing','OA-đờ / BE-đờ / MI-đing','t giữa hai nguyên âm đọc như d nhẹ (kiểu Mỹ)','We have a meeting at nine.','Chúng tôi họp lúc 9 giờ.'],
+ ['important / button','im-POR-nt / BA-n','im-PÓ-nt / BÁ-n','t trước n gần như bị nghẹt, không bật hơi','This is important.','Điều này quan trọng.'],
+ ['give him / tell her','GIV-im / TEL-ơ','GIV-im / TEL-ơ','h đầu him/her thường bị nuốt, nối vào từ trước','Tell her I called.','Nói với cô ấy là tôi gọi.'],
+ ['can / can\'t','kn / CAN\'T','cờn / KÆN','CAN yếu: "kn" (gần như không nghe), CAN\'T rõ và dài. Phân biệt bằng độ rõ của âm a.','I can do it. / I can\'t do it.','Tôi làm được. / Tôi không làm được.'],
+ ['for / to / and','fơ / tờ / ờn','fơ / tờ / ờn','Từ chức năng (for, to, and, of) đọc yếu, nhẹ. Từ nội dung (booth, price) đọc mạnh.','Cut and paste for me.','Cắt và dán giúp tôi.'],
+ ['want you to','WON-chu-tờ','OAN-chờ-tờ','d / t + y nối thành âm "ch / j"','I want you to check it.','Tôi muốn bạn kiểm tra nó.']
+];
+const FAST_SYN = [
+ ['to / lớn','big','large','huge','The booth is large.','Gian hàng lớn.'],
+ ['rẻ, vừa túi tiền','cheap','affordable','budget-friendly','This option is affordable.','Phương án này vừa túi tiền.'],
+ ['đắt','pricey','expensive','costly','It is a bit pricey.','Nó hơi đắt.'],
+ ['bắt đầu','kick off','start','commence','Let\'s kick off on Monday.','Thứ Hai bắt đầu nhé.'],
+ ['hoàn thành','wrap up','finish','complete','We will wrap up by Friday.','Thứ Sáu chúng tôi xong.'],
+ ['sửa','sort out','fix','repair','We will sort it out today.','Hôm nay chúng tôi xử lý.'],
+ ['gửi','shoot over','send','forward','I will shoot it over now.','Tôi gửi ngay đây.'],
+ ['kiểm tra','take a look','check','review','Let me take a look.','Để tôi xem thử.'],
+ ['hỏi','ask','enquire','inquire','May I enquire about the budget?','Cho tôi hỏi về ngân sách?'],
+ ['giúp','give a hand','help','assist','Can you give me a hand?','Bạn giúp tôi một tay được không?'],
+ ['cần','need','require','be required to','We require a permit.','Chúng tôi cần giấy phép.'],
+ ['mua','get','buy','purchase','We purchased the materials.','Chúng tôi đã mua vật liệu.'],
+ ['cho xem','show','present','demonstrate','Let me present the design.','Để tôi trình bày thiết kế.'],
+ ['đổi / chỉnh','tweak','change','modify','Let me tweak the layout.','Để tôi chỉnh bố cục.'],
+ ['vấn đề','problem','issue','difficulty','We have a small issue.','Chúng tôi gặp vấn đề nhỏ.'],
+ ['trì hoãn','push back','delay','postpone','We pushed it back a day.','Chúng tôi lùi một ngày.'],
+ ['duyệt, chốt','okay','confirm','approve','Please approve the design.','Vui lòng duyệt thiết kế.'],
+ ['làm ra','put together','make','produce','We put together a proposal.','Chúng tôi soạn đề xuất.'],
+ ['nói chuyện sau','catch up','talk later','follow up','Let\'s follow up on Friday.','Thứ Sáu mình trao đổi tiếp.'],
+ ['cảm ơn','thanks','thank you','I appreciate it','I appreciate your help.','Tôi trân trọng sự giúp đỡ.'],
+ ['xin lỗi','sorry','I apologize','my apologies','My apologies for the delay.','Xin lỗi về sự chậm trễ.'],
+ ['đồng ý','sure','of course','certainly','Certainly. I will send it.','Chắc chắn. Tôi sẽ gửi.']
+];
+let fs = {tab:'reduce', q:null};
+function openFast(tab){ fs={tab:tab||'reduce',q:null}; state.view='fast'; render(); window.scrollTo(0,0); }
+function fastTab(t){ fs={tab:t,q:null}; render(); }
+function fastQuiz(){
+  const list = fs.tab==='syn'?FAST_SYN:(fs.tab==='link'?FAST_LINK:FAST_REDUCE);
+  const deck = pickN(list,5);
+  const qs = deck.map(it=>{
+    if(fs.tab==='syn'){ const o=shuffleArr([it[1]].concat(pickN(list.filter(x=>x!==it),2).map(x=>x[1]))); return {p:'Nghĩa: "'+it[0]+'". Người thật hay nói kiểu THÂN MẬT nhất là?',say:null,o,a:o.indexOf(it[1]),w:it[1]+' (thân mật) · '+it[2]+' (thường) · '+it[3]+' (trang trọng)'}; }
+    const o=shuffleArr([it[0]].concat(pickN(list.filter(x=>x!==it),2).map(x=>x[0])));
+    return {p:fs.tab==='reduce'?'Người thật nói: "'+it[1]+'". Nghĩa đầy đủ là?':'Nghe: "'+it[0]+'" thực ra nghe như: '+it[1]+'. Đây là cụm nào?',say:fs.tab==='reduce'?it[1]:it[0],o,a:o.indexOf(it[0]),w:it[0]+' → '+it[1]};
+  });
+  fs.q={qs,pos:0,picked:null,right:0,done:false}; render();
+}
+function fastPick(k){ const q=fs.q; if(q.picked!==null) return; q.picked=k; const ok=k===q.qs[q.pos].a; if(ok) q.right++; sfx(ok?'ok':'bad'); skillLog('L', ok); if(ok) addXP(1); render(); }
+function fastNext(){ const q=fs.q; q.pos++; q.picked=null; if(q.pos>=q.qs.length) q.done=true; render(); }
+function renderFast(){
+  const T=[['reduce','🗣️ Nói lướt'],['link','🔗 Nuốt âm'],['syn','🔁 Đồng nghĩa']];
+  const tabs=`<div class="les-steps">${T.map(t=>`<button class="${fs.tab===t[0]?'on':''}" onclick="fastTab('${t[0]}')">${t[1]}</button>`).join('')}</div>`;
+  const head=`${headerHtml(false)}<div class="pages"><button class="home-link" style="margin-bottom:10px;color:var(--navy);border-color:var(--navy);" onclick="goHome()">← Trang chủ</button><h2 class="intro-title">🗣️ Người thật nói thế nào</h2>${tabs}`;
+  if(fs.q){
+    const q=fs.q;
+    if(q.done) return head+`<div style="text-align:center;"><div style="font-size:3rem;">${q.right>=4?'🏅':'💪'}</div><p>Đúng ${q.right}/${q.qs.length}</p></div><button class="btn-primary" onclick="fastQuiz()">Thử bộ khác</button><button class="btn-secondary" onclick="fs.q=null;render()">Xem danh sách</button></div>`;
+    const it=q.qs[q.pos], ans=q.picked!==null;
+    const opts=it.o.map((o,k)=>{ let cls='sim-opt'; if(ans){ if(k===it.a) cls+=' ok'; else if(k===q.picked) cls+=' no'; } return `<button class="${cls}" ${ans?'disabled':`onclick="fastPick(${k})"`}>${o}</button>`; }).join('');
+    return head+`<div class="item-count">Thử nhanh · ${q.pos+1}/${q.qs.length}</div><p style="font-size:1.05rem;margin:8px 0;"><strong>${it.p}</strong></p>${it.say?`<div style="margin:6px 0;">${listenSlowPair(it.say)}</div>`:''}${opts}${ans?`<div class="sim-bubble me">${q.picked===it.a?'✅ Đúng! ':'❌ Chưa đúng. '}<span class="sc-vi">${it.w}</span></div><button class="btn-primary" onclick="fastNext()">${q.pos+1>=q.qs.length?'Xem kết quả':'Câu tiếp →'}</button>`:''}</div>`;
+  }
+  let body='';
+  if(fs.tab==='reduce'){
+    body=`<p class="sc-vi">Người bản xứ gộp 2–3 từ thành một khi nói nhanh. Bạn không cần NÓI kiểu này, chỉ cần NGHE ra. Giọng đọc của máy chưa nuốt âm hoàn toàn, người thật sẽ nhanh và gọn hơn.</p>`+FAST_REDUCE.map(it=>`<div class="sc-card" style="margin-bottom:8px;"><div class="sc-vi">${it[0]} → <b style="color:#e0541f;font-size:1.05rem;">${it[1]}</b></div><div class="lx-f">Đọc bồi: ${it[2]} · ${it[3]}</div><div class="sc-alt" style="margin:4px 0 0;">${listenSlowPair(it[1])}<div class="t"><strong>${it[1]}</strong><i>nói lướt</i></div></div><div class="sc-alt" style="margin:4px 0 0;">${listenSlowPair(it[0])}<div class="t"><strong>${it[0]}</strong><i>đầy đủ</i></div></div><div class="sc-alt" style="margin:4px 0 0;">${listenSlowPair(it[4])}<div class="t"><strong>${it[4]}</strong><i>${it[5]}</i></div></div></div>`).join('');
+  } else if(fs.tab==='link'){
+    body=`<p class="sc-vi">Khi nói nhanh, các từ dính vào nhau: âm cuối nối vào âm đầu của từ sau, một số âm bị nuốt. Vì vậy bạn "nghe không ra" dù biết từng từ.</p>`+FAST_LINK.map(it=>`<div class="sc-card" style="margin-bottom:8px;"><div class="sc-vi"><b style="color:#e0541f;font-size:1.05rem;">${it[0]}</b> → nghe như: <b>${it[1]}</b></div><div class="lx-f">Đọc bồi: ${it[2]}</div><div class="lx-y">${it[3]}</div><div class="sc-alt" style="margin:4px 0 0;">${listenSlowPair(it[4])}<div class="t"><strong>${it[4]}</strong><i>${it[5]}</i></div></div></div>`).join('');
+  } else {
+    body=`<p class="sc-vi">Cùng một ý, người thật hay dùng từ ngắn và thân mật; văn bản và khách lớn tuổi/công ty lớn dùng từ trang trọng. Biết cả ba để nghe hiểu và chọn đúng khi viết email.</p>`+FAST_SYN.map(it=>`<div class="sc-card" style="margin-bottom:8px;"><div class="les-k">${it[0].toUpperCase()}</div><div class="sc-vi">😎 <b>${it[1]}</b> (thân mật) · 🙂 <b>${it[2]}</b> (thường) · 🎩 <b>${it[3]}</b> (trang trọng)</div><div class="sc-alt" style="margin:4px 0 0;">${listenSlowPair(it[4])}<div class="t"><strong>${it[4]}</strong><i>${it[5]}</i></div></div></div>`).join('');
+  }
+  return head+`<button class="btn-primary" style="margin:6px 0 12px;" onclick="fastQuiz()">🎯 Thử nhanh 5 câu</button>${body}</div>`;
+}
+
 let les = null;
 function openLessons(){ state.view='lessons'; render(); }
 function startLesson(i, step){ if(!lvUnlocked(lvOf(LESSONS[i].id))){ openLessons(); return; } stopLesson(); les = {i, step:step||'watch', token:0, sub:0, slow:false, pos:0, picked:null, right:0, spk:null, qs:null, rung:1, bld:null, hint:false}; state.view='lesson'; render(); window.scrollTo(0,0); if(les.step==='watch') setTimeout(playLesson,500); }
@@ -4526,7 +4624,7 @@ function homeHeroHtml(){
   const B0 = !bsAllDone();
   const i = lesNextIdx(), L = LESSONS[i], tot=LESSONS.length, doneN = Object.keys(lesState.done).length, st = (typeof statsStreak==='function')?statsStreak():0;
   const lv = LEVELS.map(v=>`<div class="lv-pill ${lvUnlocked(v.n)?'':'lock'}"><b>${lvUnlocked(v.n)?'':'🔒 '}Cấp ${v.n}</b><span>${lvDone(v.n)}/${v.ids.length}</span></div>`).join('');
-  const tiles = [['🎯','Bắn bóng','startGame()'],['🧲','Từ đi kèm','openColloc()'],['🎧','Khách thật','openReal()'],['📚','Từ ngành','openGlossary()']].map(t=>`<button class="h-tile" onclick="${t[2]}"><span>${t[0]}</span>${t[1]}</button>`).join('');
+  const tiles = [['🎯','Bắn bóng','startGame()'],['🧲','Từ đi kèm','openColloc()'],['🎧','Khách thật','openReal()'],['📚','Từ ngành','openGlossary()'],['🗣️','Nói lướt','openFast()']].map(t=>`<button class="h-tile" onclick="${t[2]}"><span>${t[0]}</span>${t[1]}</button>`).join('');
   return `${remindBarHtml()}<div class="hero47"><div class="hero-top"><div><div class="hero-k">${B0?'BƯỚC HÔM NAY · CẤP 0 NỀN TẢNG':'BÀI HÔM NAY · CẤP '+lvOf(L.id)}</div><div class="hero-t">${B0?BASICS[bsNextIdx()].icon+' '+BASICS[bsNextIdx()].t:L.icon+' '+L.title}</div><div class="hero-s">${B0?BASICS[bsNextIdx()].s+' · 3 phút':L.sub}</div></div><div class="hero-stat"><b>🔥 ${st}</b>ngày</div></div>
     <div class="les-stage mini">${lesSceneSvg(L.scene)}</div>
     ${B0?`<button class="btn-primary hero-go" onclick="startBasic(${bsNextIdx()})">▶ Học bước này (3 phút)</button><button class="btn-secondary" style="width:100%;margin-top:8px;" onclick="startLesson(${i})">Đã biết cơ bản? Vào thẳng Bài 1 →</button>`:`<button class="btn-primary hero-go" onclick="startLesson(${i})">▶ Học bài này (15 phút)</button>`}
@@ -5117,6 +5215,7 @@ function render(){
   if(state.view==='ex4Done'){ app.innerHTML = renderEx4Done(); return; }
   if(state.view==='lessons'){ app.innerHTML = renderLessons(); return; }
   if(state.view==='lesson'){ app.innerHTML = renderLesson(); return; }
+  if(state.view==='fast'){ app.innerHTML = renderFast(); return; }
   if(state.view==='basic'){ app.innerHTML = renderBasic(); return; }
   if(state.view==='frames'){ app.innerHTML = renderFrames(); return; }
   if(state.view==='frameDrill'){ app.innerHTML = renderFrameDrill(); return; }
@@ -5836,7 +5935,7 @@ function renderLoading(){
   return '<div class="loading">Đang mở sổ hộ chiếu...</div>';
 }
 
-const APP_VERSION = 'v60';
+const APP_VERSION = 'v61';
 function headerHtml(showHome){
   const strip = SKILL_ORDER.map(sk=>`<span class="visa-item">${svgIcon(SKILL_ICON[sk],14)}${SKILL_LABEL[sk]}</span>`).join('');
   return `
