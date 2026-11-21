@@ -4269,6 +4269,27 @@ function lesBasicsHtml(){
    <div class="lx-y">Chủ ngữ số ít (it, he, she, 1 thứ) → động từ thêm -s. Số nhiều (we, they, nhiều thứ) → động từ để nguyên. Sau can / will / could / should thì động từ luôn để nguyên.</div>
    <div class="lx-r">⚡ 1 thứ → +s · nhiều thứ → không +s · can/will + V gốc.</div></div></details>`;
 }
+function lesWItems(){ const all=lesMyLines(); const keep=all.slice().sort((x,y)=>x.x.en.length-y.x.en.length).slice(0,3).map(o=>o.k); const my=all.filter(o=>keep.indexOf(o.k)>=0); return my.map(o=>({t:'dict',k:o.k})).concat(my.map(o=>({t:'write',k:o.k}))); }
+function lesWCheck(){
+  const it=lesWItems()[les.pos], en=LESSONS[les.i].lines[it.k].en, el=document.getElementById('wi'); const val=el?el.value:'';
+  if(!val.trim()) return;
+  const g=gradeFreeText(val,[en]), ok=g.pct>=85; sfx(ok?'ok':'bad'); skillLog(it.t==='dict'?'L':'W', ok); if(ok) addXP(2);
+  les.wres={pct:g.pct,ok,val,miss:diffMissingWords(val,en)}; render();
+}
+function lesWNext(){ les.pos++; les.wres=null; les.hint=false; if(les.pos>=lesWItems().length){ lesGo('quiz'); return; } render(); window.scrollTo(0,0); }
+function lesWriteHtml(head){
+  const L=LESSONS[les.i], items=lesWItems();
+  if(les.pos>=items.length){ lesGo('quiz'); return ''; }
+  const it=items[les.pos], x=L.lines[it.k], r=les.wres, q=x.en.replace(/'/g,"\\'");
+  const bar=`<div class="item-count">${it.t==='dict'?'Nghe chép':'Viết từ nghĩa'} · ${les.pos+1}/${items.length}</div><p class="sc-vi">${it.t==='dict'?'Nghe câu của bạn rồi gõ lại đúng những gì nghe được. Nghe nhiều lần cũng được.':'Chỉ có nghĩa tiếng Việt. Tự viết câu tiếng Anh, dùng khuôn đã học.'}</p>`;
+  const top = it.t==='dict'
+    ? `<div class="sim-bubble me"><div class="sc-vi">Bấm nghe:</div><span style="display:inline-flex;gap:6px;"><button class="phrase-play" onclick="speak('${q}')">${svgIcon('headphones',16)}</button><button class="phrase-play" onclick="speakSlow('${q}')">🐢</button></span></div>`
+    : `<div class="sim-bubble me"><div class="sc-vi">Viết bằng tiếng Anh:</div><div style="font-size:1.1rem;font-weight:700;">${x.vi}</div>${les.hint?`<div class="sc-vi">Gợi ý: ${x.en.split(/\s+/).slice(0,3).join(' ')} …</div>`:''}</div>`;
+  let box='';
+  if(!r) box=`<textarea id="wi" rows="3" style="width:100%;padding:10px;border-radius:12px;border:2px solid var(--navy);font-size:1.05rem;margin:8px 0;" placeholder="Gõ câu tiếng Anh ở đây…" autocapitalize="off" autocomplete="off" spellcheck="false"></textarea><div class="les-ctrl"><button class="btn-primary" onclick="lesWCheck()">Kiểm tra</button>${it.t==='write'&&!les.hint?'<button class="btn-secondary" onclick="les.hint=true;render()">💡 Gợi ý</button>':''}</div>`;
+  else box=`<div class="feedback ${r.ok?'good':(r.pct>=50?'mid':'bad')}">${r.ok?'✓ Rất tốt!':(r.pct>=50?'〜 Gần đúng':'✗ Chưa đúng')} (${r.pct}%)<br>Bạn gõ: "${r.val}"${r.miss.length&&!r.ok?`<br>Thiếu/khác: <b>${r.miss.join(', ')}</b>`:''}</div><div class="sim-bubble"><div class="sc-vi">Câu chuẩn:</div><strong>${x.en}</strong> ${listenSlowPair(x.en)}<div class="sc-vi">${x.vi}</div></div><button class="btn-primary" onclick="lesWNext()">${les.pos+1>=items.length?'Sang quiz →':'Tiếp →'}</button>`;
+  return head+bar+top+box+'</div>';
+}
 function lesLineExHtml(id,en){
   const L = LINE_EX[id]; if(!L) return lesSentHtml(en);
   const slot = t=>t.replace(/\[[^\]]*\]/g,m=>`<span class="slot">${m}</span>`);
@@ -4490,7 +4511,7 @@ let les = null;
 function openLessons(){ state.view='lessons'; render(); }
 function startLesson(i, step){ if(!lvUnlocked(lvOf(LESSONS[i].id))){ openLessons(); return; } stopLesson(); les = {i, step:step||'watch', token:0, sub:0, slow:false, pos:0, picked:null, right:0, spk:null, qs:null, rung:1, bld:null, hint:false}; state.view='lesson'; render(); window.scrollTo(0,0); if(les.step==='watch') setTimeout(playLesson,500); }
 function stopLesson(){ if(les) les.token=0; try{ speechSynthesis.cancel(); }catch(e){} }
-function lesGo(step){ stopLesson(); les.step=step; les.pos=0; les.picked=null; les.spk=null; les.rung=1; les.bld=null; les.hint=false; if(step==='quiz'){ les.qs=lesBuildQuiz(); les.right=0; } render(); window.scrollTo(0,0); if(step==='watch') setTimeout(playLesson,400); }
+function lesGo(step){ stopLesson(); les.step=step; les.pos=0; les.picked=null; les.spk=null; les.rung=1; les.bld=null; les.hint=false; les.wres=null; if(step==='quiz'){ les.qs=lesBuildQuiz(); les.right=0; } render(); window.scrollTo(0,0); if(step==='watch') setTimeout(playLesson,400); }
 function lesLineUI(k){
   const L = LESSONS[les.i].lines[k];
   const c=document.getElementById('les-c'), y=document.getElementById('les-y'); if(!c) return;
@@ -4570,7 +4591,7 @@ function lesMic(k){
 }
 const LES_RUNGS = [['Nghe và đọc theo','Có chữ trước mặt. Chỉ nghe rồi đọc to, chưa chấm điểm.'],['Ráp câu từ các từ','Bấm các từ theo đúng thứ tự để ráp thành câu. Bấm 🔊 nghe nếu quên.'],['Nói theo, có chữ','Nhìn chữ và nói vào mic.'],['Nói không nhìn chữ','Chỉ có nghĩa tiếng Việt. Tự nói câu tiếng Anh. Kẹt thì bấm Gợi ý.']];
 function lesMyLines(){ return LESSONS[les.i].lines.map((x,k)=>({x,k})).filter(o=>o.x.w==='Y').slice(0,4); }
-function lesSpeakNext(){ les.pos++; les.spk=null; les.bld=null; les.hint=false; if(les.pos>=lesMyLines().length){ les.rung++; les.pos=0; if(les.rung>4){ lesGo('quiz'); return; } window.scrollTo(0,0); } render(); }
+function lesSpeakNext(){ les.pos++; les.spk=null; les.bld=null; les.hint=false; if(les.pos>=lesMyLines().length){ les.rung++; les.pos=0; if(les.rung>4){ lesGo('write'); return; } window.scrollTo(0,0); } render(); }
 function lesNorm(t){ return t.toLowerCase().replace(/[^a-z0-9' ]/g,'').replace(/\s+/g,' ').trim(); }
 function lesBldInit(k,text){ const w=text.split(/\s+/).map((t,id)=>({id,t})); let sh=shuffleArr(w.slice()); if(w.length>1 && sh.every((x,n)=>x.id===n)) sh.reverse(); les.bld={k,words:w,pool:sh,sel:[],st:''}; }
 function lesBld(id){ const b=les.bld; if(!b||b.st==='ok') return; if(b.sel.indexOf(id)>=0) return; b.sel.push(id); if(b.sel.length===b.words.length){ const got=lesNorm(b.sel.map(i=>b.words[i].t).join(' ')), want=lesNorm(b.words.map(x=>x.t).join(' ')); b.st = got===want?'ok':'bad'; sfx(b.st==='ok'?'ok':'bad'); skillLog('W', b.st==='ok'); if(b.st==='ok') addXP(2); } render(); }
@@ -4578,7 +4599,7 @@ function lesBldUndo(id){ const b=les.bld; if(!b||b.st==='ok') return; b.sel=b.se
 function lesBldReset(){ const b=les.bld; b.sel=[]; b.st=''; render(); }
 function lesHintToggle(){ les.hint=true; render(); }
 function lesStepsBar(){
-  const S=[['watch','1 Xem'],['chunks','2 Khuôn'],['speak','3 Nói'],['quiz','4 Quiz']];
+  const S=[['watch','1 Xem'],['chunks','2 Khuôn'],['speak','3 Nói'],['write','4 Viết'],['quiz','5 Quiz']];
   return `<div class="les-steps">${S.map(s=>`<button class="${les.step===s[0]?'on':''}" onclick="lesGo('${s[0]}')">${s[1]}</button>`).join('')}</div>`;
 }
 function renderLessons(){
@@ -4591,7 +4612,7 @@ function renderLessons(){
       <button class="btn-secondary" style="width:100%;margin-bottom:6px;" onclick="startEx4(${L.n})">🏆 Thi ${passed?'lại ':''}Cấp ${L.n}${L.n>1&&!open?' (thi thẳng để lên cấp)':''}</button>`; }).join('');
   const b0 = `<div class="les-grp">Cấp 0 · Nền tảng (như trẻ học) ${bsAllDone()?'· ✅':''}</div><p class="sc-vi" style="margin:0 2px 8px;">10 bước nhỏ, mỗi bước 3 phút: hiểu 1 điều → thử 3 câu → dùng với khách. Đã học ${BASICS.filter(m=>bsDone(m.id)).length}/${BASICS.length}.</p>${BASICS.map((m,i)=>`<button class="les-card ${bsDone(m.id)?'done':''}" onclick="startBasic(${i})"><div class="les-ic">${m.icon}</div><div class="les-t"><strong>${m.t}</strong><span>${m.s}</span></div><div class="les-ck">${bsDone(m.id)?'✓':'▶'}</div></button>`).join('')}`;
   return `${headerHtml(false)}<div class="pages"><button class="home-link" style="margin-bottom:12px;color:var(--navy);border-color:var(--navy);" onclick="goHome()">← Trang chủ</button>
-  <h2 class="intro-title">🗺️ Lộ trình ${LESSONS.length} bài</h2><p class="sc-vi">Mỗi bài ~15 phút: xem cảnh → học 4 khuôn → nói 4 bậc (nghe → ráp câu → nói có chữ → nói không chữ) → quiz. Học hết bài của cấp rồi thi: đạt cả 4 kỹ năng (≥80%) để mở cấp tiếp.</p>${b0}${blocks}</div>`;
+  <h2 class="intro-title">🗺️ Lộ trình ${LESSONS.length} bài</h2><p class="sc-vi">Mỗi bài ~20 phút, đủ 4 kỹ năng: xem cảnh (nghe) → học 4 khuôn → nói 4 bậc → nghe chép + viết → quiz. Học hết bài của cấp rồi thi: đạt cả 4 kỹ năng (≥80%) để mở cấp tiếp.</p>${b0}${blocks}</div>`;
 }
 function renderLesson(){
   const L = LESSONS[les.i];
@@ -4649,6 +4670,7 @@ function renderLesson(){
     return head+bar+clientBox+`<div class="sim-bubble me"><div class="sc-vi">Bạn muốn nói:</div><div style="font-size:1.1rem;font-weight:700;">${o.x.vi}</div>${reveal}</div>
     ${fb}<div class="les-ctrl"><button class="btn-primary" onclick="lesMic(${o.k})">🎙️ Nói bằng tiếng Anh</button><button class="btn-secondary" onclick="lesHintToggle()">💡 Gợi ý</button><button class="btn-secondary" onclick="lesSpeakNext()">Câu tiếp →</button></div></div>`;
   }
+  if(les.step==='write') return lesWriteHtml(head);
   if(les.step==='quiz'){
     const q=les.qs[les.pos], ans=les.picked!==null;
     const opts=q.opts.map((o,k)=>{ let cls='sim-opt'; if(ans){ if(o.ok) cls+=' ok'; else if(k===les.picked) cls+=' no'; } return `<button class="${cls}" ${ans?'disabled':`onclick="lesPick(${k})"`}>${o.t}</button>`; }).join('');
@@ -4670,7 +4692,7 @@ function homeHeroHtml(){
   const tiles = [['🎯','Bắn bóng','startGame()'],['🧲','Từ đi kèm','openColloc()'],['🎧','Khách thật','openReal()'],['📚','Từ ngành','openGlossary()'],['🗣️','Nói lướt','openFast()']].map(t=>`<button class="h-tile" onclick="${t[2]}"><span>${t[0]}</span>${t[1]}</button>`).join('');
   return `${remindBarHtml()}<div class="hero47"><div class="hero-top"><div><div class="hero-k">${B0?'BƯỚC HÔM NAY · CẤP 0 NỀN TẢNG':'BÀI HÔM NAY · CẤP '+lvOf(L.id)}</div><div class="hero-t">${B0?BASICS[bsNextIdx()].icon+' '+BASICS[bsNextIdx()].t:L.icon+' '+L.title}</div><div class="hero-s">${B0?BASICS[bsNextIdx()].s+' · 3 phút':L.sub}</div></div><div class="hero-stat"><b>🔥 ${st}</b>ngày</div></div>
     <div class="les-stage mini">${lesSceneSvg(L.scene)}</div>
-    ${B0?`<button class="btn-primary hero-go" onclick="startBasic(${bsNextIdx()})">▶ Học bước này (3 phút)</button><button class="btn-secondary" style="width:100%;margin-top:8px;" onclick="startLesson(${i})">Đã biết cơ bản? Vào thẳng Bài 1 →</button>`:`<button class="btn-primary hero-go" onclick="startLesson(${i})">▶ Học bài này (15 phút)</button>`}
+    ${B0?`<button class="btn-primary hero-go" onclick="startBasic(${bsNextIdx()})">▶ Học bước này (3 phút)</button><button class="btn-secondary" style="width:100%;margin-top:8px;" onclick="startLesson(${i})">Đã biết cơ bản? Vào thẳng Bài 1 →</button>`:`<button class="btn-primary hero-go" onclick="startLesson(${i})">▶ Học bài này (20 phút)</button>`}
     <div class="lv-row">${lv}</div>
     <button class="btn-secondary" style="width:100%;margin-top:8px;" onclick="openLessons()">🗺️ Lộ trình ${doneN}/${tot} bài · thi lên cấp</button>
     <div class="les-k" style="margin-top:14px;">LUYỆN NHANH 5 PHÚT</div><div class="h-tiles">${tiles}</div>${weakList().length?`<button class="btn-secondary" style="width:100%;margin-top:8px;" onclick="openWeak()">🎙️ Ôn ${weakList().length} câu nói chưa đạt 80%</button>`:''}
@@ -5979,7 +6001,7 @@ function renderLoading(){
   return '<div class="loading">Đang mở sổ hộ chiếu...</div>';
 }
 
-const APP_VERSION = 'v62';
+const APP_VERSION = 'v63';
 function headerHtml(showHome){
   const strip = SKILL_ORDER.map(sk=>`<span class="visa-item">${svgIcon(SKILL_ICON[sk],14)}${SKILL_LABEL[sk]}</span>`).join('');
   return `
@@ -6044,80 +6066,7 @@ function renderHome(){
   ${headerHtml(false)}
   <div class="pages">
     ${homeHeroHtml()}
-    <details class="more47"><summary>🗄️ Kho bài cũ (ít cần dùng)</summary>
-    ${levelBadgeHtml()}
-    ${todaySuggestionHtml()}
-    <div class="method-card">
-      <div class="icon-badge">${svgIcon('bulb',24)}</div>
-      <div>
-        <h4>Cách học hiệu quả — không nặng lý thuyết</h4>
-        <ul>
-          <li>Không cần học ngữ pháp trước — nói theo mẫu câu có sẵn, hiểu luật sau nếu cần.</li>
-          <li>Học theo cụm từ nguyên khối, không dịch từng chữ từ tiếng Việt.</li>
-          <li>Đọc to và lặp lại mỗi câu — quan trọng hơn việc học thêm từ mới.</li>
-          <li>Nói được, giao tiếp được là mục tiêu đầu tiên — không cần hoàn hảo ngay.</li>
-        </ul>
-      </div>
-    </div>
-    <button class="grammar-entry-card" style="border-color:var(--navy);background:var(--navy);" onclick="startExam()">
-      <div class="icon-badge on-dark">${svgIcon('certificate',24)}</div>
-      <div>
-        <h4 style="color:var(--cream);">Bài thi xếp trình độ</h4>
-        <p style="color:#C9D3DC;">18 câu tổng hợp cả 6 chủ đề.${examResult? ` Lần trước: <strong style="color:var(--gold-light);">${examResult.level} (${examResult.pct}/100)</strong>` : ''}</p>
-      </div>
-      <div class="arrow" style="color:var(--gold-light);">→</div>
-    </button>
-
-    <button class="topic-card" style="border-left:4px solid var(--gold);margin-top:6px;" onclick="openGym()">
-      <div class="card-top"><div class="icon-badge" style="border-color:var(--gold);font-size:1.5rem;">🏋️</div>
-      <div class="titles"><h3>Phòng tập 4 kỹ năng</h3><div class="en">Nghe chép · nghe số · nhại & ghi âm · đọc văn bản thật · điền từ · mẫu email · bảng tiến bộ</div></div></div></button>
-    <p class="sc-vi" style="margin:4px 2px 10px;">👆 Mẹo: chạm vào bất kỳ từ tiếng Anh nào trong app để xem cách đọc, cách nhấn và nghĩa.</p>
-    ${stageHomeCardHtml()}
-    ${planHomeCardHtml()}
-    <button class="topic-card" style="border-left:4px solid var(--stamp);margin-top:6px;" onclick="openArticles()">
-      <div class="card-top"><div class="icon-badge" style="border-color:var(--stamp);font-size:1.5rem;">🔤</div>
-      <div class="titles"><h3>Mạo từ a / an / the</h3><div class="en">3 câu hỏi quyết định · mẹo nhớ · cụm dùng sẵn · luyện tập</div></div></div></button>
-    <button class="topic-card" style="border-left:4px solid var(--stamp);margin-top:6px;" onclick="openPronHub()">
-      <div class="card-top"><div class="icon-badge" style="border-color:var(--stamp);font-size:1.5rem;">🗣️</div>
-      <div class="titles"><h3>Phát âm chuẩn</h3><div class="en">${HARD_WORDS.length} từ khó · quy tắc nhận diện · nghe phân biệt · luyện với mic</div></div></div></button>
-    <button class="topic-card" style="border-left:4px solid var(--stamp);margin-top:6px;" onclick="openSims()">
-      <div class="card-top">
-        <div class="icon-badge" style="border-color:var(--stamp);color:var(--stamp);font-size:1.5rem;">🎭</div>
-        <div class="titles"><h3>Nhập vai mô phỏng</h3><div class="en">Nói chuyện với "khách" · ${SIMS.length} tình huống · nghe, đọc, nói, viết</div></div>
-      </div>
-    </button>
-    <button class="topic-card" style="border-left:4px solid var(--stamp);margin-top:6px;" onclick="openScenarios()">
-      <div class="card-top">
-        <div class="icon-badge" style="border-color:var(--stamp);color:var(--stamp);font-size:1.5rem;">🗂️</div>
-        <div class="titles">
-          <h3>Kho tình huống thực tế</h3>
-          <div class="en">${SCENARIOS.length} tình huống · ${SCENARIOS.reduce((n,x)=>n+x.phrases.length,0)} câu dùng ngay · có tìm kiếm</div>
-        </div>
-      </div>
-    </button>
-    <h3 class="section-sub">Công cụ luyện tập</h3>
-    <div class="tool-grid">
-      <button class="tool-card" onclick="startRecall()"><div class="tool-icon" style="color:var(--gold);">${svgIcon('lightning',22)}</div><div>⚡ Luyện phản xạ</div></button>
-      <button class="tool-card" onclick="startPronPractice()"><div class="tool-icon" style="color:var(--stamp);">${svgIcon('mic',22)}</div><div>🎯 Luyện phát âm</div></button>
-      <button class="tool-card" onclick="openDialogues()"><div class="tool-icon" style="color:var(--stamp);">${svgIcon('headphones',22)}</div><div>Nghe hội thoại dài</div></button>
-      <button class="tool-card" onclick="openEmailList()"><div class="tool-icon" style="color:var(--stamp);">${svgIcon('pencil',22)}</div><div>Viết email hoàn chỉnh</div></button>
-      <button class="tool-card" onclick="openPhrases()"><div class="tool-icon">${svgIcon('phrasebook',22)}</div><div>Cụm câu thông dụng</div></button>
-      <button class="tool-card" onclick="openWordBank()"><div class="tool-icon">${svgIcon('wordbank',22)}</div><div>Ngân hàng từ vựng</div></button>
-      <button class="tool-card" onclick="openHotspot('booth')"><div class="tool-icon">🖼️</div><div>Hình ảnh tương tác</div></button>
-      <button class="tool-card" onclick="openAiTutor()"><div class="tool-icon" style="color:var(--red);">🤖</div><div>Gia sư AI</div></button>
-    </div>
-
-    <details class="ref"><summary>📚 Tra cứu khi cần (không bắt buộc học)</summary>
-      <div class="tool-grid">
-        <button class="tool-card" onclick="openGrammar()"><div class="tool-icon">${svgIcon('grammar',22)}</div><div>Ngữ pháp cốt lõi</div></button>
-        <button class="tool-card" onclick="openFormulas()"><div class="tool-icon">${svgIcon('formula',22)}</div><div>Công thức ráp câu</div></button>
-        <button class="tool-card" onclick="openSentenceGuide()"><div class="tool-icon">🧩</div><div>Cách ráp câu hoàn chỉnh</div></button>
-      </div>
-    </details>
-    <p style="color:var(--ink-soft);">6 chủ đề dưới đây đi theo đúng hành trình gặp khách hàng thực tế — từ chào hỏi đến theo dõi sau buổi gặp. Hoàn thành cả 4 kỹ năng trong một chủ đề để nhận con dấu vào sổ hộ chiếu.</p>
-    <div class="topic-grid">${cards}</div>
     <div class="footer-reset"><button onclick="if(confirm('Xóa toàn bộ tiến trình đã lưu?')) resetAllProgress()">Xóa tiến trình đã lưu</button></div>
-  </details>
   </div>`;
 }
 
