@@ -578,14 +578,14 @@ body{ background:linear-gradient(180deg,#141c47,#1d2b64 40%,#f6f7fb 40%); }
 .gm-arena{ position:relative; height:290px; border-radius:20px; background:radial-gradient(circle at 30% 20%,#fff,#dfe6ff 60%,#c9d3ff); overflow:hidden; margin:8px 0 12px; box-shadow:inset 0 0 0 2px #fff; touch-action:manipulation; }
 .gm-b{ position:absolute; max-width:46%; padding:10px 12px; border:none; border-radius:999px; font-weight:800; font-size:.95rem; color:#fff; background:radial-gradient(circle at 30% 25%,#ffb48a,#ff5a7a 70%); box-shadow:0 6px 14px rgba(255,80,100,.4); animation:gmFloat 2.5s ease-in-out infinite alternate; line-height:1.2; } .gm-b:nth-child(3n+2){ background:radial-gradient(circle at 30% 25%,#9fb0ff,#4d5fe0 70%); box-shadow:0 6px 14px rgba(77,95,224,.4);} .gm-b:nth-child(3n){ background:radial-gradient(circle at 30% 25%,#8be6c0,#1fa971 70%); box-shadow:0 6px 14px rgba(31,169,113,.4);}
 @keyframes gmFloat{ from{ transform:translateY(0);} to{ transform:translateY(14px);} } .gm-b.shake{ animation:gmShake .35s; } @keyframes gmShake{ 0%,100%{ transform:translateX(0);} 25%{ transform:translateX(-8px);} 75%{ transform:translateX(8px);} } .gm-win{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:4rem; }
+.lv-row{ display:flex; gap:8px; margin-top:12px; } .lv-pill{ flex:1; background:#eef0ff; border-radius:12px; padding:8px; text-align:center; font-size:.8rem; color:var(--navy); } .lv-pill b{ display:block; } .lv-pill.lock{ opacity:.55; } .les-card.locked{ opacity:.5; }
 .les-grp{ font-weight:800; color:var(--stamp); margin:16px 2px 8px; font-size:.95rem; } .remind-bar{ background:#eef0ff; color:var(--navy); border-radius:14px; padding:10px 12px; margin:0 0 10px; font-size:.9rem; cursor:pointer; } .remind-bar.due{ background:#ff7a45; color:#fff; font-weight:600; } .remind-bar.ok{ background:#e3f7ee; color:#0f6b46; }
 .les-card{ display:flex; align-items:center; gap:12px; width:100%; text-align:left; background:#fff; border:1px solid var(--line); border-radius:18px; padding:12px; margin-bottom:10px; box-shadow:0 4px 14px rgba(40,50,110,.07); }
 .les-card.done{ border-color:var(--green); } .les-ic{ font-size:1.8rem; width:46px; height:46px; display:flex; align-items:center; justify-content:center; background:var(--cream-2); border-radius:14px; flex:none; }
 .les-t{ flex:1; } .les-t strong{ display:block; color:var(--navy); } .les-t span{ color:var(--ink-soft); font-size:.85rem; } .les-ck{ font-weight:800; color:var(--green); }
 
 </style>
-<link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#1d2b64">
-</head>
+<link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#1d2b64"></head>
 <body>
 <div id="app"></div>
 
@@ -3505,7 +3505,17 @@ function renderFrameDone(){
 let lesState = {done:{}};
 async function loadLessons(){ try{ const r = await window.storage.get('lessons:v1', false); if(r) lesState = JSON.parse(r.value); }catch(e){} }
 function saveLessons(){ try{ window.storage.set('lessons:v1', JSON.stringify(lesState), false); }catch(e){} }
-function lesNextIdx(){ const i = LESSONS.findIndex(l=>!lesState.done[l.id]); return i<0?0:i; }
+const LEVELS = [
+ {n:1,t:'Cấp 1 · Sống sót',s:'Chào khách, nghe yêu cầu, gọi điện',ids:['l1','l2','l6']},
+ {n:2,t:'Cấp 2 · Làm việc',s:'Báo giá, sửa thiết kế, tiến độ, công trình + booth/event/office/retail cơ bản',ids:['l3','l4','l5','l7','l11','l13','l15','l17']},
+ {n:3,t:'Cấp 3 · Chuyên nghiệp',s:'Hợp đồng, bàn giao, khiếu nại + vận hành từng ngành',ids:['l8','l9','l10','l12','l14','l16','l18']}];
+function lvUnlocked(n){ return n===1 || !!(lesState.lv && lesState.lv[n-1]); }
+function lvOf(id){ const L = LEVELS.find(l=>l.ids.indexOf(id)>=0); return L?L.n:1; }
+function lvDone(n){ const L=LEVELS[n-1]; return L.ids.filter(id=>lesState.done[id]).length; }
+function lesNextIdx(){
+  for(const L of LEVELS){ if(!lvUnlocked(L.n)) break; const id = L.ids.find(x=>!lesState.done[x]); if(id) return LESSONS.findIndex(l=>l.id===id); }
+  return 0;
+}
 function lesPerson(x, flip, skin, hair, shirt, extra){
   return `<g class="person" transform="translate(${x},0)"><g transform="scale(${flip?-1:1},1)">
     <rect x="-26" y="124" width="52" height="80" rx="20" fill="${shirt}"/>
@@ -3659,6 +3669,15 @@ function lesExtraHtml(L,ci){
   return `<div class="les-why"><b>Vì sao nói vậy:</b> ${x.why}</div>${row('Người thật hay nói',x.casual)}${row('Trang trọng hơn',x.formal)}`;
 }
 
+function lesInlineHtml(L){
+  const txt = (L.lines.map(x=>x.en).join(' ')+' '+L.chunks.map(c=>c.p+' '+c.ex.map(e=>e.en).join(' ')).join(' ')).toLowerCase();
+  const words=[]; GLOSSARY.forEach(g=>g.w.forEach(w=>{ if(new RegExp('\\b'+w.w.toLowerCase()+'s?\\b').test(txt)) words.push(w); }));
+  const cols = COLLOC.filter(c=>{ const k=c[2].split(/\s+/)[0].toLowerCase(); const full=c[0].replace('___',c[1]==='Ø'?'':c[1]).replace(/\s+/g,' ').toLowerCase().replace(/[.?!]/g,''); return txt.indexOf(full)>=0; });
+  let h='';
+  if(words.length) h+=`<div class="sc-card"><div class="les-k">TỪ NGÀNH TRONG BÀI NÀY</div>${words.slice(0,8).map(w=>`<div class="sc-alt" style="margin:6px 0 0;">${listenSlowPair(w.w)}<div class="t"><strong>${w.w}</strong> <span style="font-family:var(--font-mono);color:var(--ink-soft);">${w.ipa}</span><i>Đọc bồi: <b style="color:#e0541f;">${ipaViet(w.ipa)}</b> · ${w.vi}</i></div></div>`).join('')}</div>`;
+  if(cols.length) h+=`<div class="sc-card"><div class="les-k">TỪ ĐI KÈM ĐÚNG</div>${cols.map(c=>`<div class="sc-alt" style="margin:6px 0 0;"><div class="t"><strong>${c[0].replace('___','<span class="slot">'+c[1]+'</span>')}</strong><i>${c[2]} · ${c[3]}</i></div></div>`).join('')}</div>`;
+  return h;
+}
 /* ============ TỪ ĐI KÈM (GIỚI TỪ / CỤM CỐ ĐỊNH) ============ */
 const COLLOC = [
  ["I'm interested ___ this course.","in","interested IN","quan tâm đến"],["She is good ___ design.","at","good AT","giỏi về"],["It depends ___ the budget.","on","depend ON","tùy vào"],
@@ -3799,9 +3818,10 @@ let ex4 = null, ex4Hist = [];
 const EX4_SEC = [['L','👂 NGHE'],['R','📖 ĐỌC'],['W','✍️ VIẾT'],['S','🗣️ NÓI']];
 async function loadEx4(){ try{ const r = await window.storage.get('exam4:v1', false); if(r) ex4Hist = JSON.parse(r.value); }catch(e){} }
 function saveEx4(){ try{ window.storage.set('exam4:v1', JSON.stringify(ex4Hist.slice(-12)), false); }catch(e){} }
-function ex4Build(){
+function ex4Build(level){
   const allC=[], allY=[], allEx=[];
-  LESSONS.forEach(l=>{ l.lines.forEach((x,k)=>{ if(x.w==='C' && l.lines[k+1] && l.lines[k+1].w==='Y') allC.push({c:x,y:l.lines[k+1]}); if(x.w==='Y') allY.push(x); });
+  const pool = level ? LESSONS.filter(l=>LEVELS[level-1].ids.indexOf(l.id)>=0) : LESSONS;
+  pool.forEach(l=>{ l.lines.forEach((x,k)=>{ if(x.w==='C' && l.lines[k+1] && l.lines[k+1].w==='Y') allC.push({c:x,y:l.lines[k+1]}); if(x.w==='Y') allY.push(x); });
     l.chunks.forEach(c=>c.ex.forEach(e=>allEx.push(Object.assign({p:c.p},e)))); });
   const qs = [];
   pickN(allC,6).forEach(o=>qs.push({sk:'L',type:'mc',prompt:'Nghe khách nói, chọn câu đáp hợp lý nhất:',say:o.c.en,opts:shuffleArr([{t:o.y.en,ok:true}].concat(pickN(allY.filter(a=>a.en!==o.y.en),3).map(w=>({t:w.en,ok:false})))),reveal:o.c.en+' → '+o.y.en}));
@@ -3812,7 +3832,7 @@ function ex4Build(){
   const sp = pickN(allY,5); sp.forEach(y=>qs.push({sk:'S',type:'speak',prompt:'Đọc to câu này (nói rõ, đủ từ):',answer:y.en,show:y.en,vi:y.vi,reveal:y.en}));
   return qs;
 }
-function startEx4(){ ex4 = {qs:ex4Build(), pos:0, picked:null, input:'', res:null, pts:{L:[],R:[],W:[],S:[]}, mic:null, skipS:false}; state.view='ex4'; render(); window.scrollTo(0,0); ex4Say(); }
+function startEx4(level){ ex4 = {level:level||0, qs:ex4Build(level), pos:0, picked:null, input:'', res:null, pts:{L:[],R:[],W:[],S:[]}, mic:null, skipS:false}; state.view='ex4'; render(); window.scrollTo(0,0); ex4Say(); }
 function ex4Say(){ const q=ex4.qs[ex4.pos]; if(q && q.say) setTimeout(()=>speak(q.say),300); }
 function ex4Pick(k){ if(ex4.picked!==null) return; const q=ex4.qs[ex4.pos], ok=q.opts[k].ok; ex4.picked=k; ex4.pts[q.sk].push(ok?1:0); sfx(ok?'ok':'bad'); skillLog(q.sk,ok); if(ok) addXP(1); render(); }
 function ex4Score(sk,pct){ return pct>=85?1:(pct>=70?0.5:0); }
@@ -3837,7 +3857,8 @@ function ex4Finish(){
   const pc = {}; let sum=0, n=0;
   EX4_SEC.forEach(([k])=>{ const a=ex4.pts[k], tot=ex4.qs.filter(q=>q.sk===k).length; pc[k]=tot?Math.round(a.reduce((x,y)=>x+y,0)/tot*100):0; sum+=pc[k]; n++; });
   const avg=Math.round(sum/n), pass = EX4_SEC.every(([k])=>pc[k]>=80);
-  ex4.final={pc,avg,pass}; ex4Hist.push({d:localDay(),pc,avg,pass}); saveEx4(); if(pass) addXP(40);
+  ex4.final={pc,avg,pass}; ex4Hist.push({d:localDay(),pc,avg,pass,lv:ex4.level}); saveEx4(); if(pass) addXP(40);
+  if(pass && ex4.level){ lesState.lv = lesState.lv||{}; lesState.lv[ex4.level] = true; saveLessons(); }
   sfx(pass?'win':'lose'); state.view='ex4Done'; render(); window.scrollTo(0,0);
 }
 function renderEx4(){
@@ -3872,12 +3893,12 @@ function renderEx4Done(){
   const tips = {L:'Nghe lại các bài hội thoại với phụ đề tắt, rồi tập nghe chép (Phòng tập).',R:'Ôn Từ đi kèm và 4 khuôn của mỗi bài, đọc to cả câu.',W:'Làm Ráp khuôn nhanh, rồi tự viết lại câu của bài không nhìn đáp án.',S:'Bước 3 Nói của mỗi bài: nói theo 3 lần, chú ý chữ đậm và âm cuối.'};
   return `${headerHtml(false)}<div class="pages"><div style="text-align:center;"><div style="font-size:3rem;">${f.pass?'🏆':'💪'}</div><h2 class="intro-title" style="justify-content:center;">${f.pass?'ĐẠT cả 4 kỹ năng':'Chưa đạt, ôn thêm nhé'}</h2><p class="sc-vi">Điểm trung bình ${f.avg}%. Đạt khi MỖI kỹ năng từ 80% trở lên.</p></div>
   ${bars}<div class="explain-box"><div class="explain-line"><b>Kỹ năng yếu nhất: ${weak[1]} (${f.pc[weak[0]]}%).</b> ${tips[weak[0]]}</div></div>
-  <button class="btn-primary" onclick="startEx4()">Thi lại (đề mới)</button><button class="btn-secondary" onclick="goHome()">Về trang chủ</button></div>`;
+  ${ex4.level&&f.pass?`<div class="explain-box"><div class="explain-line"><b>🎉 Đã đạt Cấp ${ex4.level}.</b> ${ex4.level<3?'Cấp '+(ex4.level+1)+' đã được mở.':'Bạn đã hoàn thành toàn bộ lộ trình!'}</div></div>`:''}<button class="btn-primary" onclick="startEx4(${ex4.level||0})">Thi lại (đề mới)</button><button class="btn-secondary" onclick="openLessons()">Về lộ trình</button></div>`;
 }
 function renderEx4Home(){
   const hist = ex4Hist.slice().reverse().slice(0,5).map(h=>`<div class="sc-card" style="margin-bottom:6px;display:flex;justify-content:space-between;"><span>${h.d}</span><span>${EX4_SEC.map(([k])=>k+':'+h.pc[k]).join(' · ')}</span><b>${h.pass?'ĐẠT':h.avg+'%'}</b></div>`).join('');
   return `${headerHtml(false)}<div class="pages"><button class="home-link" style="margin-bottom:12px;color:var(--navy);border-color:var(--navy);" onclick="goHome()">← Trang chủ</button>
-  <h2 class="intro-title">🏆 Thi 4 kỹ năng</h2>
+  <h2 class="intro-title">🏆 Thi tổng hợp 4 kỹ năng</h2>
   <div class="explain-box"><div class="explain-line"><b>Đề thi gồm 30 câu, chấm khắt khe:</b><br>👂 Nghe 10 câu · 📖 Đọc 10 câu (từ đi kèm + nghĩa) · ✍️ Viết 5 câu · 🗣️ Nói 5 câu (bằng mic).<br>Viết và Nói: từ 85% mới đủ điểm, 70–84% nửa điểm.<br><b>Chỉ ĐẠT khi cả 4 kỹ năng từ 80% trở lên.</b> Mỗi lần ra đề mới từ ${LESSONS.length} bài học.</div></div>
   <button class="btn-primary" style="margin:12px 0;" onclick="startEx4()">▶ Bắt đầu thi</button>${hist?`<p class="sc-vi">Các lần thi gần đây:</p>${hist}`:''}</div>`;
 }
@@ -3939,7 +3960,7 @@ function renderGameDone(){
 
 let les = null;
 function openLessons(){ state.view='lessons'; render(); }
-function startLesson(i, step){ stopLesson(); les = {i, step:step||'watch', token:0, sub:0, slow:false, pos:0, picked:null, right:0, spk:null, qs:null}; state.view='lesson'; render(); window.scrollTo(0,0); if(les.step==='watch') setTimeout(playLesson,500); }
+function startLesson(i, step){ if(!lvUnlocked(lvOf(LESSONS[i].id))){ openLessons(); return; } stopLesson(); les = {i, step:step||'watch', token:0, sub:0, slow:false, pos:0, picked:null, right:0, spk:null, qs:null}; state.view='lesson'; render(); window.scrollTo(0,0); if(les.step==='watch') setTimeout(playLesson,500); }
 function stopLesson(){ if(les) les.token=0; try{ speechSynthesis.cancel(); }catch(e){} }
 function lesGo(step){ stopLesson(); les.step=step; les.pos=0; les.picked=null; les.spk=null; if(step==='quiz'){ les.qs=lesBuildQuiz(); les.right=0; } render(); window.scrollTo(0,0); if(step==='watch') setTimeout(playLesson,400); }
 function lesLineUI(k){
@@ -4025,11 +4046,15 @@ function lesStepsBar(){
   return `<div class="les-steps">${S.map(s=>`<button class="${les.step===s[0]?'on':''}" onclick="lesGo('${s[0]}')">${s[1]}</button>`).join('')}</div>`;
 }
 function renderLessons(){
-  const GRP = {0:'Giao tiếp chung với khách',10:'🎪 Ngành booth / triển lãm',12:'🎤 Ngành event / sự kiện',14:'🏢 Ngành office / văn phòng',16:'🛍️ Ngành retail / bán lẻ'};
-  const cards = LESSONS.map((l,i)=>{ const d=lesState.done[l.id];
-    return (GRP[i]?`<div class="les-grp">${GRP[i]}</div>`:'')+`<button class="les-card ${d?'done':''}" onclick="startLesson(${i})"><div class="les-ic">${l.icon}</div><div class="les-t"><strong>Bài ${i+1}. ${l.title}</strong><span>${l.sub}</span></div><div class="les-ck">${d?'✓ '+d.best+'%':'▶'}</div></button>`; }).join('');
+  const blocks = LEVELS.map(L=>{
+    const open = lvUnlocked(L.n), passed = !!(lesState.lv&&lesState.lv[L.n]);
+    const cards = L.ids.map(id=>{ const i=LESSONS.findIndex(l=>l.id===id), l=LESSONS[i], d=lesState.done[id];
+      return open ? `<button class="les-card ${d?'done':''}" onclick="startLesson(${i})"><div class="les-ic">${l.icon}</div><div class="les-t"><strong>${l.title}</strong><span>${l.sub}</span></div><div class="les-ck">${d?'✓ '+d.best+'%':'▶'}</div></button>`
+        : `<div class="les-card locked"><div class="les-ic">🔒</div><div class="les-t"><strong>${l.title}</strong><span>${l.sub}</span></div></div>`; }).join('');
+    return `<div class="les-grp">${L.t} ${passed?'· ✅ đã đạt':''}</div><p class="sc-vi" style="margin:0 2px 8px;">${L.s}. ${open?`Đã học ${lvDone(L.n)}/${L.ids.length} bài.`:`Cần thi đạt Cấp ${L.n-1} để mở.`}</p>${cards}
+      <button class="btn-secondary" style="width:100%;margin-bottom:6px;" onclick="startEx4(${L.n})">🏆 Thi ${passed?'lại ':''}Cấp ${L.n}${L.n>1&&!open?' (thi thẳng để lên cấp)':''}</button>`; }).join('');
   return `${headerHtml(false)}<div class="pages"><button class="home-link" style="margin-bottom:12px;color:var(--navy);border-color:var(--navy);" onclick="goHome()">← Trang chủ</button>
-  <h2 class="intro-title">🎬 Bài học hội thoại</h2><p class="sc-vi">Mỗi bài 12 câu thực tế: xem cảnh → học khuôn → nói theo → quiz. Học xong 1 bài khoảng 15 phút.</p>${cards}</div>`;
+  <h2 class="intro-title">🗺️ Lộ trình ${LESSONS.length} bài</h2><p class="sc-vi">Mỗi bài ~15 phút: xem cảnh → học 4 khuôn → nói theo → quiz. Học hết bài của cấp rồi thi: đạt cả 4 kỹ năng (≥80%) để mở cấp tiếp.</p>${blocks}</div>`;
 }
 function renderLesson(){
   const L = LESSONS[les.i];
@@ -4048,7 +4073,7 @@ function renderLesson(){
     const slotHtml = t=>t.replace(/\[[^\]]*\]/g,m=>`<span class="slot">${m}</span>`);
     const ch = L.chunks.map((c,ci)=>`<div class="sc-card"><div class="les-k">KHUÔN ${ci+1}</div><div class="les-pat">${slotHtml(c.p)}</div><div class="les-use">👉 Nghĩa: ${c.vi}</div>
       ${c.ex.map(e=>`<div class="sc-alt" style="margin:6px 0 0;">${listenSlowPair(e.en)}<div class="t"><strong>${e.en}</strong><i>${e.vi}</i></div></div>`).join('')}
-      ${lesExtraHtml(L,ci)}
+      ${lesExtraHtml(L,ci)}${ci===L.chunks.length-1?lesInlineHtml(L):''}
       <div class="les-how"><b>Cách dùng nhanh:</b> giữ phần đầu khuôn, chỉ thay phần <span class="slot">[ ]</span> bằng điều bạn muốn nói. Đọc to 3 lần. Không cần phân tích ngữ pháp.</div></div>`).join('');
     return head+`<p class="sc-vi">Chỉ 4 khuôn. Nhìn khuôn → nghe ví dụ → đọc to. Cuối bài có quiz kiểm tra bạn ráp đúng chưa.</p>${lesHardHtml(L)}${ch}
     <button class="btn-primary" onclick="lesGo('speak')">Tiếp: nói theo →</button></div>`;
@@ -4084,18 +4109,16 @@ function renderLesson(){
     <button class="btn-secondary" onclick="lesGo('watch')">Xem lại cảnh</button><button class="btn-secondary" onclick="lesGo('quiz')">Làm lại quiz</button><button class="btn-secondary" onclick="openLessons()">Danh sách bài</button></div>`;
 }
 function homeHeroHtml(){
-  const i = lesNextIdx(), L = LESSONS[i], doneN = Object.keys(lesState.done).length, st = (typeof statsStreak==='function')?statsStreak():0;
-  const tiles = [['👂','Nghe','startDict()'],['🗣️','Nói','startShadow()'],['📖','Đọc','openDocs()'],['✍️','Viết','startCloze()']].map(t=>`<button class="h-tile" onclick="${t[2]}"><span>${t[0]}</span>${t[1]}</button>`).join('');
-  return `${remindBarHtml()}<div class="hero47"><div class="hero-top"><div><div class="hero-k">BÀI HÔM NAY</div><div class="hero-t">${L.icon} ${L.title}</div><div class="hero-s">${L.sub}</div></div><div class="hero-stat"><b>🔥 ${st}</b>ngày<br><b>${doneN}/${LESSONS.length}</b>bài</div></div>
+  const i = lesNextIdx(), L = LESSONS[i], tot=LESSONS.length, doneN = Object.keys(lesState.done).length, st = (typeof statsStreak==='function')?statsStreak():0;
+  const lv = LEVELS.map(v=>`<div class="lv-pill ${lvUnlocked(v.n)?'':'lock'}"><b>${lvUnlocked(v.n)?'':'🔒 '}Cấp ${v.n}</b><span>${lvDone(v.n)}/${v.ids.length}</span></div>`).join('');
+  const tiles = [['🎯','Bắn bóng','startGame()'],['🧲','Từ đi kèm','openColloc()'],['🎧','Khách thật','openReal()'],['📚','Từ ngành','openGlossary()']].map(t=>`<button class="h-tile" onclick="${t[2]}"><span>${t[0]}</span>${t[1]}</button>`).join('');
+  return `${remindBarHtml()}<div class="hero47"><div class="hero-top"><div><div class="hero-k">BÀI HÔM NAY · CẤP ${lvOf(L.id)}</div><div class="hero-t">${L.icon} ${L.title}</div><div class="hero-s">${L.sub}</div></div><div class="hero-stat"><b>🔥 ${st}</b>ngày</div></div>
     <div class="les-stage mini">${lesSceneSvg(L.scene)}</div>
     <button class="btn-primary hero-go" onclick="startLesson(${i})">▶ Học bài này (15 phút)</button>
-    <div class="h-tiles">${tiles}</div>
-    <button class="btn-secondary" style="width:100%;margin-top:8px;" onclick="openLessons()">📚 Tất cả ${LESSONS.length} bài hội thoại</button>
-    <button class="btn-secondary" style="width:100%;" onclick="openColloc()">🧲 Từ đi kèm: interested IN, good AT…</button>
-    <button class="btn-primary" style="width:100%;margin-top:8px;" onclick="startGame()">🎯 Trò chơi: Bắn bóng ráp câu</button>
-    <button class="btn-secondary" style="width:100%;margin-top:8px;" onclick="openGlossary()">📚 Từ vựng ngành: booth · event · office · retail</button>
-    <button class="btn-secondary" style="width:100%;margin-top:8px;" onclick="openEx4()">🏆 Thi 4 kỹ năng (chấm điểm)</button>
-    <button class="btn-secondary" style="width:100%;margin-top:8px;" onclick="openReal()">🎧 Khách thật nói gì + 🆘 nghe không hiểu</button></div>`;
+    <div class="lv-row">${lv}</div>
+    <button class="btn-secondary" style="width:100%;margin-top:8px;" onclick="openLessons()">🗺️ Lộ trình ${doneN}/${tot} bài · thi lên cấp</button>
+    <div class="les-k" style="margin-top:14px;">LUYỆN NHANH 5 PHÚT</div><div class="h-tiles">${tiles}</div>
+    <button class="btn-secondary" style="width:100%;margin-top:8px;" onclick="openEx4()">🏆 Thi tổng hợp 4 kỹ năng</button></div>`;
 }
 
 let sim = null;
@@ -5397,7 +5420,7 @@ function renderLoading(){
   return '<div class="loading">Đang mở sổ hộ chiếu...</div>';
 }
 
-const APP_VERSION = 'v54';
+const APP_VERSION = 'v55';
 function headerHtml(showHome){
   const strip = SKILL_ORDER.map(sk=>`<span class="visa-item">${svgIcon(SKILL_ICON[sk],14)}${SKILL_LABEL[sk]}</span>`).join('');
   return `
@@ -5462,7 +5485,7 @@ function renderHome(){
   ${headerHtml(false)}
   <div class="pages">
     ${homeHeroHtml()}
-    <details class="more47"><summary>⚙️ Tất cả công cụ &amp; chủ đề</summary>
+    <details class="more47"><summary>🗄️ Kho bài cũ (ít cần dùng)</summary>
     ${levelBadgeHtml()}
     ${todaySuggestionHtml()}
     <div class="method-card">
@@ -5821,6 +5844,5 @@ function renderResults(){
   render();
 })();
 </script>
-<script>if("serviceWorker" in navigator && location.protocol.startsWith("http")){navigator.serviceWorker.register("sw.js").catch(function(){});}</script>
-</body>
+<script>if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(function(){});}</script></body>
 </html>
