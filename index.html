@@ -583,6 +583,7 @@ body{ background:linear-gradient(180deg,#141c47,#1d2b64 40%,#f6f7fb 40%); }
 @keyframes gmFloat{ from{ transform:translateY(0);} to{ transform:translateY(14px);} } .gm-b.shake{ animation:gmShake .35s; } @keyframes gmShake{ 0%,100%{ transform:translateX(0);} 25%{ transform:translateX(-8px);} 75%{ transform:translateX(8px);} } .gm-win{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:4rem; }
 .lv-row{ display:flex; gap:8px; margin-top:12px; } .lv-pill{ flex:1; background:#eef0ff; border-radius:12px; padding:8px; text-align:center; font-size:.8rem; color:var(--navy); } .lv-pill b{ display:block; } .lv-pill.lock{ opacity:.55; } .les-card.locked{ opacity:.5; }
 .lx{ margin:-4px 4px 10px; } .lx summary{ cursor:pointer; font-size:.82rem; font-weight:700; color:var(--navy); padding:6px 4px; } .lx-s{ background:#fff8ef; border:1px solid #ffd9b8; border-radius:12px; padding:10px; margin:6px 0; } .lx-en{ font-weight:700; color:var(--navy); margin-bottom:4px; } .lx-f{ font-weight:700; margin:4px 0; } .lx-y,.lx-r{ font-size:.9rem; margin:4px 0; } .lx-r{ background:#fff; border-left:4px solid #e0541f; padding:6px 8px; border-radius:6px; } .lx-k{ font-size:.7rem; letter-spacing:.06em; color:#e0541f; font-weight:800; margin-top:8px; }
+#lk-pop{ max-height:78vh; overflow-y:auto; }
 .les-grp{ font-weight:800; color:var(--stamp); margin:16px 2px 8px; font-size:.95rem; } .remind-bar{ background:#eef0ff; color:var(--navy); border-radius:14px; padding:10px 12px; margin:0 0 10px; font-size:.9rem; cursor:pointer; } .remind-bar.due{ background:#ff7a45; color:#fff; font-weight:600; } .remind-bar.ok{ background:#e3f7ee; color:#0f6b46; }
 .les-card{ display:flex; align-items:center; gap:12px; width:100%; text-align:left; background:#fff; border:1px solid var(--line); border-radius:18px; padding:12px; margin-bottom:10px; box-shadow:0 4px 14px rgba(40,50,110,.07); }
 .les-card.done{ border-color:var(--green); } .les-ic{ font-size:1.8rem; width:46px; height:46px; display:flex; align-items:center; justify-content:center; background:var(--cream-2); border-radius:14px; flex:none; }
@@ -3179,6 +3180,146 @@ const LEX = {};
   SCENARIOS.forEach(sc=>sc.words.forEach(w=>{ if(w.en.indexOf(' ')<0){ const k=w.en.toLowerCase(); if(!LEX[k]) put(w.en,{vi:w.vi}); } }));
   HARD_WORDS.forEach(h=>{ const base = h.w.split(' ')[0]; const k = base.toLowerCase(); if(!LEX[k]) put(base,{}); Object.assign(LEX[k],{ipa:h.ipa.replace(/\s*\(.*?\)/,''), st:h.st, say:h.vi, bad:h.bad, tip:h.tip}); });
 })();
+const LEX_PLUS_RAW = String.raw`the|(mạo từ) cái / những … đã biết là cái nào|đờ (trước phụ âm) · đi (trước nguyên âm)|Dùng khi hai bên đã biết là cái nào: the booth, the price.|
+is|là, thì (số ít)|IZ|he / she / it / danh từ số ít + is: The price is high.|'s (it's, that's)
+are|là, thì (số nhiều; you / we / they)|AR|you / we / they / nhiều thứ + are: The lights are bright.|'re (we're, they're)
+an|một (trước âm a, e, i, o, u)|ân|an office, an hour (h câm nên dùng an).|
+percent|phần trăm|pờ-SENT|Số + percent, không thêm s: five percent.|%
+catch|bắt kịp, bắt lấy|KÉTCH|catch up = bắt kịp tiến độ.|keep pace
+might|có thể (chưa chắc)|MAIT|might + V gốc: It might be a power problem.|may, could, maybe
+maximum|tối đa|MÉC-xi-mầm|maximum height = chiều cao tối đa.|max, upper limit
+away|xa, đi mất|ờ-OÂY|right away = ngay lập tức.|immediately, straight away
+standby|dự phòng, sẵn sàng|STEN-bai|on standby = trong tình trạng sẵn sàng.|ready, backup
+besides|ngoài … ra|bi-SAIDZ|besides + danh từ = ngoài cái đó ra.|apart from, other than
+fire|lửa, cháy|FAI-ờ|fire safety = an toàn phòng cháy.|
+target|mục tiêu|TA-git|target customer = khách hàng mục tiêu.|goal, aim
+realistic|thực tế, khả thi|ri-ờ-LIS-tic|Is that realistic? = có khả thi không?|doable, feasible
+night|đêm|NAIT|at night = vào ban đêm.|
+forty|bốn mươi (40)|FÓ-ti|Nhấn âm ĐẦU ở forty (40); nhấn âm SAU ở fourteen (14).|
+kilowatts|kilowatt (kW)|KI-lờ-oát|Đơn vị công suất điện.|kW
+them|họ, chúng (tân ngữ)|đem|Dùng sau động từ: I sent them the file.|
+book|đặt trước (động từ)|BUCK|book a forklift = đặt xe nâng.|reserve, schedule
+other|khác|Ớ-đờ|any other = bất kỳ cái khác nào.|another, else
+set|đặt, lắp, dựng|SET|set up = sắp xếp, dựng.|arrange, put up
+billion|tỷ|BIL-iần|one billion = 1.000.000.000.|
+almost|gần như|OL-mốt|almost done = gần xong.|nearly, just about
+electrical|thuộc về điện|i-LEC-tri-cồ|electrical problem = sự cố điện.|
+yesterday|hôm qua|YÉT-tờ-đây|Đi với động từ quá khứ: I sent it yesterday.|
+rigging|hệ thống treo / giàn treo|RÍ-ghinh|Treo đèn, màn hình lên giàn.|
+official|chính thức|ờ-FÍ-shồ|official contractor = nhà thầu chính thức.|authorized
+submit|nộp|sờp-MÍT|submit a form = nộp biểu mẫu.|send in, hand in
+forklift|xe nâng|FOK-lift|Xe nâng hàng ở hội trường.|
+advance|trước (thời gian)|ờt-VANS|in advance = trước (đặt trước, trả trước).|beforehand, ahead of time
+product|sản phẩm|PRÁ-dắc||
+generator|máy phát điện|JEN-ờ-rây-tờ||
+certificate|giấy chứng nhận|sờ-TI-fi-cợt|fire safety certificate = giấy chứng nhận PCCC.|
+submission|việc nộp|sờp-MÍ-shần|after submission = sau khi nộp.|
+products|sản phẩm (số nhiều)|PRÁ-dắcts||
+cashier|thu ngân|ca-SHIA||
+rearrange|sắp xếp lại|ri-ờ-RÂNJ|rearrange the shelves.|reorganize, move around
+sent|đã gửi (quá khứ của send)|SENT|I sent it yesterday.|
+did|đã (trợ động từ quá khứ)|ĐÍT|Did you get it? / We did.|
+mostly|chủ yếu|MÔST-li|Mostly booths = chủ yếu là gian hàng.|mainly
+tablet|máy tính bảng|TÉP-lờt||
+cold|lạnh|CÔLD|a cold look = cảm giác lạnh lẽo.|
+pictures|hình ảnh|PIC-chờz|Hay dùng pictures / photos / images.|photos, images
+spend|tiêu, chi|SPEND|spend + tiền hoặc thời gian.|use, put in
+exactly|chính xác|ig-ZEC-li|Exactly. = Đúng vậy (đồng ý hoàn toàn).|precisely, right
+partner|đối tác, cộng sự|PAT-nờ||
+boss|sếp|BOS|Người thật hay nói boss; trang trọng hơn: manager.|manager, supervisor
+trouble|rắc rối|TRÂ-bồ|Sorry for the trouble.|problem, inconvenience
+guarantee|bảo đảm|ge-rần-TI|Can you guarantee…? = bạn đảm bảo không?|promise, ensure
+okay|được, ổn|ÔU-KÂY|Dùng khắp nơi: đồng ý, ổn.|OK, sure, alright
+overtime|tăng ca|ÔU-vờ-taim|work overtime = làm thêm giờ.|extra hours
+o'clock|giờ đúng|ờ-CLOC|Chỉ dùng cho giờ tròn: two o'clock.|
+text|nhắn tin (động từ)|TEKST|text me = nhắn tin cho tôi.|message
+oh|ồ|ÔU|Ngạc nhiên nhẹ.|
+than|hơn (so sánh)|đen|darker than = đậm hơn.|
+during|trong suốt|DIU-ring|during construction = trong lúc thi công.|throughout, while
+written|được viết|RÍ-tần|It is written in the contract.|
+transfer|chuyển (tiền)|TRÁNS-fơ|transfer the payment = chuyển khoản.|wire, send
+beautiful|đẹp|BIU-ti-fồ|Khen thiết kế: beautiful, lovely, gorgeous.|lovely, gorgeous, stunning
+bent|bị cong|BENT|bend → bent (cong).|warped
+manual|sách hướng dẫn|MÉN-niu-ồ|exhibitor manual = sổ tay đơn vị tham gia.|guide, handbook
+above|phía trên, cao hơn|ờ-BÂV|anything above that = mọi thứ cao hơn mức đó.|over, higher than
+form|biểu mẫu|FOM|submit the form.|
+weight|trọng lượng|WEIT|a weight limit = giới hạn tải.|
+own|của riêng|ÔN|your own booth = gian hàng riêng.|
+has|có (he / she / it)|HÉZ|She has a plan.|
+unload|dỡ hàng|ân-LÔD||
+packaging|bao bì|PÉC-ki-jinh|Không đếm được, không thêm s.|
+dismantling|việc tháo dỡ|dis-MÉN-tơ-linh||
+midnight|nửa đêm|MÍT-nait||
+organizing|đang tổ chức|Ó-gờ-nai-zinh|organize an event.|arranging, running
+launch|ra mắt|LOÂNCH|product launch = buổi ra mắt sản phẩm.|
+congratulations|chúc mừng|cần-GRÉT-chu-LÂY-shần|Luôn có s: Congratulations!|well done
+program|chương trình|PRÔU-gram||
+increase|tăng|in-CRIS|increase the brightness = tăng độ sáng.|raise, turn up
+brightness|độ sáng|BRAIT-nịs||
+rains|mưa (he / she / it)|REINZ|If it rains…|
+current|hiện tại|KƠ-rần|current office = văn phòng hiện tại.|present
+renovate|cải tạo|RE-nờ-vây||
+whole|toàn bộ|HÔL|the whole floor = cả tầng.|entire
+employees|nhân viên|im-PLOI-iz||
+kitchen|bếp|KÍT-chần||
+disturb|làm phiền|đis-TƠB|Will the work disturb the staff?|bother
+shifts|ca làm việc|SHIFTS||
+management|ban quản lý|MÉN-ịt-mần||
+treated|đã xử lý|TRI-tịt|treated wood = gỗ đã xử lý.|
+retardant|chất chống cháy lan|ri-TA-đần|fire-retardant coating.|
+coating|lớp phủ|CÔU-tinh||
+sprinklers|đầu phun chữa cháy|SPRINH-clờz||
+emergency|khẩn cấp|i-MƠ-jần-si|emergency lights = đèn khẩn cấp.|
+exits|lối thoát|EC-sịts||
+quarter|quý (3 tháng)|KUO-tờ|next quarter = quý sau.|
+premium|cao cấp|PRI-mi-ầm|premium feel = cảm giác cao cấp.|high-end, luxury
+young|trẻ|YÂNG||
+aged|ở độ tuổi|EIJD|aged 25 to 40.|
+reach|tiếp cận, đến|RICH|reach customers = tiếp cận khách.|get to
+sellers|hàng bán chạy / người bán|SE-lờz|best sellers = hàng bán chạy.|
+eye|mắt|AI|at eye level = ngang tầm mắt.|
+level|mức, tầng|LE-vồ||
+season|mùa|SI-zần|every season = mỗi mùa.|
+shelves|các kệ|SHELVZ|shelf → shelves.|
+audience|khán giả|Ó-đi-ần||
+aisle|lối đi giữa kệ|AIL|Chữ s câm: đọc "ail".|
+fifteenth|thứ mười lăm (15)|fif-TINTH|on the fifteenth = vào ngày 15.|
+anytime|bất cứ lúc nào|E-ni-taim|Call me anytime.|whenever
+maintenance|bảo trì|MEIN-tờ-nần||
+their|của họ|đe-ờ|their stage = sân khấu của họ.|
+her|cô ấy (của cô ấy)|hờ|tell her = nói với cô ấy.|
+pick|chọn, nhặt|PIC|pick up = lấy, đón.|choose, collect
+turn|xoay, bật|TƠN|turn it on = bật.|switch
+paste|dán|PÂYST|copy and paste.|
+affordable|vừa túi tiền|ờ-FO-đờ-bồ|affordable price.|reasonable, budget-friendly
+pricey|đắt (thân mật)|PRAI-si|It's a bit pricey.|expensive, costly
+kick|đá|KIC|kick off = bắt đầu.|start, begin
+wrap|gói|RÉP|wrap up = kết thúc.|finish, complete
+sort|phân loại|SOT|sort out = giải quyết.|fix, resolve
+shoot|bắn|SHUT|shoot over = gửi nhanh.|send
+enquire|hỏi (trang trọng)|in-KOAI-ờ|enquire about the price.|ask, inquire
+hand|bàn tay|HEND|give a hand = giúp một tay.|help
+require|đòi hỏi, cần|ri-KOAI-ờ|require a permit = cần giấy phép.|need
+present|trình bày (động từ)|pri-ZENT|present the design.|show
+tweak|chỉnh nhẹ|TUÍC|tweak the layout.|adjust, change
+pushed|đã lùi|PÚSHT|push back = lùi lịch.|postponed
+apologies|lời xin lỗi|ờ-PÓ-lờ-jiz|My apologies for the delay.|sorry
+gonna|sắp (going to)|GÂ-nờ|Nói lướt: I'm gonna send it.|going to
+gotta|phải|GÁ-đờ|We gotta finish.|have to
+hafta|phải|HÁP-tờ||have to
+gimme|cho tôi|GIM-mi||give me
+kinda|hơi|KAI-nờ-đờ||kind of
+lotta|nhiều|LÁ-đờ||a lot of
+outta|hết, ra khỏi|AU-đờ||out of
+dunno|không biết|đờ-NÂU|I dunno = I don't know.|
+lemme|để tôi|LEM-mi||let me
+didja|bạn đã … chưa|ĐÍT-chờ||did you
+whaddaya|bạn … gì|OÁT-đờ-giờ||what do you
+whatcha|bạn đang … gì|OÁT-chờ||what are you
+gotcha|hiểu rồi|GỐT-chờ||got you
+coulda|lẽ ra có thể|KUT-đờ||could have
+shoulda|lẽ ra nên|SHUT-đờ||should have`;
+LEX_PLUS_RAW.split('\n').forEach(r=>{ const p=r.split('|'); if(p.length<5) return; const k=p[0].toLowerCase(); const e=LEX[k]||(LEX[k]={w:p[0]}); if(!e.vi) e.vi=p[1]; if(!e.say && !e.ipa) e.say=p[2]; if(p[3]) e.use=p[3]; if(p[4] && !(e.syn&&e.syn.length)) e.syn=p[4].split(',').map(x=>x.trim()).filter(Boolean); });
 const LEX_VOWEL = 'iɪeɛæɑɒɔoʊuʌəɚɝaɜ';
 function ipaStress(ipa){
   const s = ipa.replace(/[\/\[\]]/g,'');
@@ -3230,18 +3371,35 @@ function lexPopupHtml(res){
   else if(ip) stress = ip.total<=1 ? `<div><strong>Cách nhấn:</strong> từ 1 âm tiết</div>` : (ip.pos? `<div><strong>Cách nhấn:</strong> âm tiết thứ ${ip.pos} (trong ${ip.total} âm tiết)</div>`:'');
   if(e.ipa){ const vb = ipaViet(e.ipa); if(vb) stress += `<div><strong>Đọc bồi:</strong> <span style="font-size:1.1rem;font-weight:700;color:#e0541f;">${vb}</span> <span class="sc-vi">(chữ HOA = nhấn, đọc gần đúng)</span></div>`; }
   const forms = (res.key && res.key!==res.form) ? `<div class="sc-vi">dạng của: <strong>${res.key}</strong></div>` : '';
-  const syn = (e.syn&&e.syn.length) ? `<div style="margin-top:8px;"><strong>Đồng nghĩa hay gặp:</strong> ${e.syn.map(s=>`<span class="sc-chip" style="padding:3px 10px;cursor:pointer;" onclick="lookupWord('${s.replace(/'/g,"\\'")}')">${s}</span>`).join('')}</div>` : '';
+  const syn = (e.syn&&e.syn.length) ? `<div style="margin-top:8px;"><strong>Đồng nghĩa · người thật hay nói:</strong> ${e.syn.map(s=>`<span class="sc-chip" style="padding:3px 10px;cursor:pointer;" onclick="lookupWord('${s.replace(/'/g,"\\'")}')">${s}</span>`).join('')}</div>` : '';
   const exs = lexExamples(w).map(p=>`<div class="sc-alt" style="margin-top:6px;">${listenIconPairHtml(p.en,'phrase-play','style="width:28px;height:28px;min-width:28px;"')}<div class="t">${p.en}<i>${p.vi}</i></div></div>`).join('');
   return `<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;"><strong style="font-size:1.5rem;color:var(--navy);">${e.w||w}</strong>${e.ipa?`<span class="sc-vi" style="font-size:1rem;">${e.ipa}</span>`:''}${sp()}</div>
     ${forms}<div style="font-size:1.02rem;margin-top:6px;"><strong>Nghĩa:</strong> ${e.vi||'—'}</div>
-    ${stress}${e.say?`<div><strong>Đọc gần giống:</strong> ${e.say}</div>`:''}${e.bad?`<div class="sc-vi">⚠️ ${e.bad}</div>`:''}${e.tip?`<div class="sc-vi" style="color:var(--navy);">💡 ${e.tip}</div>`:''}
+    ${stress}${e.say?`<div><strong>Đọc gần giống:</strong> ${e.say}</div>`:''}${e.bad?`<div class="sc-vi">⚠️ ${e.bad}</div>`:''}${e.tip?`<div class="sc-vi" style="color:var(--navy);">💡 ${e.tip}</div>`:''}${e.use?`<div class="sc-vi" style="color:var(--navy);">💡 <b>Dùng đúng:</b> ${e.use}</div>`:''}
     ${syn}${exs?`<div style="margin-top:8px;"><strong>Trong câu:</strong>${exs}</div>`:''}`;
 }
-function lookupWord(raw){
+const SV = {}; let SVdone = false;
+function svBuild(){ if(SVdone) return; SVdone=true; const put=(en,vi)=>{ if(en&&vi){ const k=spkKey(en); if(k&&!SV[k]) SV[k]=vi; } };
+  LESSONS.forEach(l=>{ l.lines.forEach(x=>put(x.en,x.vi)); l.chunks.forEach(c=>c.ex.forEach(e=>put(e.en,e.vi))); });
+  BASICS.forEach(m=>{ m.cards.forEach(c=>put(c[0],c[1])); put(m.use[1],m.use[2]); });
+  FAST_REDUCE.concat(FAST_LINK,FAST_SYN).forEach(it=>put(it[4],it[5]));
+  Object.keys(LINE_EX).forEach(k=>LINE_EX[k].forEach(o=>put(o.ex[0],o.ex[1])));
+  SCENARIOS.forEach(sc=>sc.phrases.forEach(p=>put(p.en,p.vi)));
+  REAL_SAY.forEach(r=>put(r[0],r[1])); }
+function lexSentenceHtml(ctx){
+  if(!ctx||!ctx.sentence||ctx.sentence.split(/\s+/).length<2) return '';
+  svBuild(); const useFull = !!(ctx.full && SV[spkKey(ctx.full)]); const sn = useFull ? ctx.full : ctx.sentence; const vi = SV[spkKey(sn)]; let body;
+  if(vi) body=`<div style="font-size:1.02rem;margin-top:4px;">${vi}</div>`;
+  else { const ws=sn.split(/\s+/).slice(0,14).map(w=>{ const r=lexFind(w), v=r&&r.entry&&r.entry.vi; return v?`<span class="sc-chip" style="padding:2px 8px;margin:2px;">${w.replace(/[^A-Za-z'-]/g,'')}: ${v.split(/[,;/(]/)[0].trim()}</span>`:''; }).join('');
+    body=`<div class="sc-vi">Chưa có bản dịch cả câu trong app. Nghĩa từng từ:</div><div>${ws}</div><a href="https://translate.google.com/?sl=en&tl=vi&text=${encodeURIComponent(sn)}&op=translate" target="_blank" rel="noopener" style="display:inline-block;margin-top:6px;color:var(--navy);">Dịch cả câu trên Google Dịch ↗</a>`; }
+  window.__lkS = (ctx.full && SV[spkKey(ctx.full)]) ? ctx.full : sn;
+  return `<div class="lx-s" style="margin-top:10px;"><div class="lx-k">CẢ CÂU</div><div class="lx-en">${sn}</div>${body}<button class="btn-secondary" style="margin-top:8px;" onclick="document.getElementById('lk-ex').innerHTML=fullExplainHtml([window.__lkS]);this.style.display='none'">📖 Giải thích cả câu: khuôn · nói khác · nói lướt</button><div id="lk-ex"></div></div>`;
+}
+function lookupWord(raw, ctx){
   const res = lexFind(raw); if(!res) return;
   let pop = document.getElementById('lk-pop');
   if(!pop){ pop = document.createElement('div'); pop.id='lk-pop'; document.body.appendChild(pop); }
-  pop.innerHTML = `<button class="lk-close" onclick="closeLookup()">✕</button>`+lexPopupHtml(res);
+  pop.innerHTML = `<button class="lk-close" onclick="closeLookup()">✕</button>`+lexPopupHtml(res)+lexSentenceHtml(ctx);
   pop.style.display='block';
   if(res.entry) { skillLog && 0; }
 }
@@ -3257,17 +3415,18 @@ function wordAtPoint(x,y){
   while(a>0 && isW(t[a-1])) a--; while(b<t.length && isW(t[b])) b++;
   const tok = t.slice(a,b).replace(/^[-'’]+|[-'’]+$/g,''); if(tok.length<2 || !/^[A-Za-z][A-Za-z'’-]*$/.test(tok)) return null;
   const words = t.split(/[^A-Za-z'’-]+/).filter(Boolean);
-  return {tok, words};
+  let l=a; while(l>0 && !/[.?!]/.test(t[l-1])) l--; let r=b; while(r<t.length && !/[.?!]/.test(t[r])) r++;
+  return {tok, words, sentence:t.slice(l,Math.min(r+1,t.length)).trim(), full:t.trim()};
 }
 document.addEventListener('click', ev=>{
   try{
-    if(ev.target.closest('button,input,textarea,a,select,summary,#lk-pop,[data-nolookup]')){ return; }
+    if(ev.target.closest('button:not(.les-line),input,textarea,a,select,summary,#lk-pop,[data-nolookup]')){ return; }
     const pop = document.getElementById('lk-pop'); const wasOpen = pop && pop.style.display==='block';
     const hit = wordAtPoint(ev.clientX, ev.clientY);
     if(!hit){ if(wasOpen) closeLookup(); return; }
     const res = lexFind(hit.tok); if(!res) return;
     if(!res.entry){ const known = hit.words.filter(w=>lexFind(w) && lexFind(w).entry).length; if(known<1 && hit.words.length<3) return; }
-    lookupWord(hit.tok);
+    lookupWord(hit.tok, hit);
   }catch(e){}
 }, true);
 /* ============ SỔ TAY TỪ & CÁCH NÓI ============ */
@@ -4649,7 +4808,7 @@ function renderLesson(){
     <div id="les-sub" class="les-sub"><div id="les-en" class="les-en">…</div><div id="les-vi" class="les-vi"></div></div>
     <div id="les-readbox"></div>
     <div class="les-ctrl"><button class="btn-primary" onclick="playLesson()">▶ Xem / xem lại</button><button class="btn-secondary" id="les-slow" onclick="lesSlowToggle()">🐢 Chậm: tắt</button><button class="btn-secondary" id="les-subbtn" onclick="lesSubToggle()">Phụ đề: Anh + Việt</button></div>
-    <p class="sc-vi">Chạm vào một câu bên dưới để nghe lại. Chạm vào từ bất kỳ để tra cách đọc.</p>${lesBasicsHtml()}<div class="les-lines">${lines}</div>
+    <p class="sc-vi">Chạm vào một câu để nghe lại, và chạm vào BẤT KỲ từ nào để xem nghĩa, cách đọc, cách dùng đúng, đồng nghĩa và nghĩa cả câu.</p>${lesBasicsHtml()}<div class="les-lines">${lines}</div>
     <button class="btn-primary" style="margin-top:14px;" onclick="lesGo('chunks')">Tiếp: học khuôn câu →</button></div>`;
   }
   if(les.step==='chunks'){
@@ -6026,7 +6185,7 @@ function renderLoading(){
   return '<div class="loading">Đang mở sổ hộ chiếu...</div>';
 }
 
-const APP_VERSION = 'v65';
+const APP_VERSION = 'v66';
 function headerHtml(showHome){
   const strip = SKILL_ORDER.map(sk=>`<span class="visa-item">${svgIcon(SKILL_ICON[sk],14)}${SKILL_LABEL[sk]}</span>`).join('');
   return `
