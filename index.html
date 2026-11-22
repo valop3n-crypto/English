@@ -4006,7 +4006,7 @@ function ex4Mic(){
   const r=new SR(); r.lang='en-US'; r.interimResults=false; r.maxAlternatives=3; recognizing=true; ex4.mic={st:'listening'}; render(); let done=false;
   const fin=(m)=>{ if(done) return; done=true; clearTimeout(to); recognizing=false; ex4.mic=m; if(m.st==='done'){ const s=ex4Score('S',m.pct); ex4.pts.S.push(s); sfx(s>=1?'ok':'bad'); skillLog('S',s>=1); ex4.res={pct:m.pct}; } render(); };
   const to=setTimeout(()=>{ try{r.abort();}catch(e){} fin({st:'error'}); },7000);
-  r.onresult=e=>{ let best=0,heard=''; for(let a=0;a<e.results[0].length;a++){ const t=e.results[0][a].transcript,g=gradeFreeText(t,[q.answer]); if(g.pct>=best){best=g.pct;heard=t;} } fin({st:'done',pct:best,heard}); };
+  r.onresult=e=>{ let best=0,heard=''; for(let a=0;a<e.results[0].length;a++){ const t=e.results[0][a].transcript,g=gradeSpoken(t,[q.answer]); if(g.pct>=best){best=g.pct;heard=t;} } fin({st:'done',pct:best,heard}); };
   r.onerror=()=>fin({st:'error'}); r.onend=()=>{ recognizing=false; };
   try{ r.start(); }catch(e){ fin({st:'error'}); }
 }
@@ -4699,9 +4699,9 @@ function micSay(btn){
   const to=setTimeout(()=>{ if(settled) return; settled=true; done(); try{r.abort();}catch(e){} s.innerHTML='<i class="mic-n">Không nghe được, thử lại</i>'; },7000);
   r.onresult=e=>{
     if(settled) return; settled=true; clearTimeout(to); done();
-    let best=0, heard=''; for(let a=0;a<e.results[0].length;a++){ const tx=e.results[0][a].transcript, g=gradeFreeText(tx,[t]); if(g.pct>=best){ best=g.pct; heard=tx; } }
+    let best=0, heard=''; for(let a=0;a<e.results[0].length;a++){ const tx=e.results[0][a].transcript, g=gradeSpoken(tx,[t]); if(g.pct>=best){ best=g.pct; heard=tx; } }
     const k=spkKey(t), m=spkMem[k]||{t:t,best:0,n:0}; m.t=t; m.last=best; m.best=Math.max(m.best,best); m.n++; m.d=localDay(); spkMem[k]=m; saveSpk();
-    const ok=best>=70; sfx(ok?'ok':'bad'); skillLog('S',ok); if(ok) addXP(1);
+    const ok=best>=60; sfx(ok?'ok':'bad'); skillLog('S',ok); if(ok) addXP(1);
     s.innerHTML=`<b class="mic-p ${ok?'g':(best>=50?'m':'b')}">${best}% ${ok?'✓':'↻'}</b> <i class="mic-n">nghe được: "${heard}" · tốt nhất ${m.best}%</i>`;
   };
   r.onerror=()=>{ if(settled) return; settled=true; clearTimeout(to); done(); s.innerHTML='<i class="mic-n">Không nghe được, thử lại</i>'; };
@@ -4743,7 +4743,7 @@ function fullExplainHtml(parts){
 }
 
 /* ============ THỬ THÁCH HỘI THOẠI: khách nói → bạn tự đáp (ẩn đáp án) → chấm → gợi ý thứ tự → lặp 3 vòng ============ */
-const LTEST_PASS = 70;
+const LTEST_PASS = 60;
 const LTEST_ROUNDS = [['Vòng 1','Khách nói có chữ + nghĩa. Bạn tự đáp, không thấy câu mẫu.'],['Vòng 2','Chỉ còn chữ của khách, không có nghĩa.'],['Vòng 3','Chỉ NGHE khách nói, không có chữ. Như gặp khách thật.']];
 function lesOrderPieces(en){
   const parts=en.replace(/\s+/g,' ').split(/(?<=[.?!,])\s+/), out=[];
@@ -4769,10 +4769,10 @@ function lesDiff(heard,target,reveal){
   const tk=x=>(x||'').toLowerCase().replace(/[^a-z0-9'\s]/g,' ').split(/\s+/).filter(Boolean);
   const tw=(target||'').replace(/\s+/g,' ').trim().split(' '), tn=tw.map(w=>tk(w).join('')), hw=(heard||'').replace(/\s+/g,' ').trim().split(' ').filter(Boolean), hn=hw.map(w=>tk(w).join(''));
   const n=tn.length,m=hn.length, L=Array.from({length:n+1},()=>Array(m+1).fill(0));
-  for(let i=n-1;i>=0;i--) for(let j=m-1;j>=0;j--) L[i][j]= tn[i]===hn[j]? L[i+1][j+1]+1 : Math.max(L[i+1][j],L[i][j+1]);
+  for(let i=n-1;i>=0;i--) for(let j=m-1;j>=0;j--) L[i][j]= gsNear(tn[i],hn[j])? L[i+1][j+1]+1 : Math.max(L[i+1][j],L[i][j+1]);
   let i=0,j=0; const T=[],H=[]; let miss=0,extra=0,ok=0;
   while(i<n||j<m){
-    if(i<n&&j<m&&tn[i]===hn[j]){ T.push(`<span style="color:#1b8a3e;font-weight:700;">${tw[i]}</span>`); H.push(`<span style="color:#1b8a3e;font-weight:700;">${hw[j]}</span>`); i++;j++;ok++; }
+    if(i<n&&j<m&&gsNear(tn[i],hn[j])){ T.push(`<span style="color:#1b8a3e;font-weight:700;">${tw[i]}</span>`); H.push(`<span style="color:#1b8a3e;font-weight:700;">${hw[j]}</span>`); i++;j++;ok++; }
     else if(j<m&&(i>=n||L[i][j+1]>=L[i+1][j])){ H.push(`<span style="color:#d9730d;font-weight:700;text-decoration:underline wavy;">${hw[j]}</span>`); j++;extra++; }
     else { T.push(reveal?`<span style="color:#d33;font-weight:700;background:#fde4e4;border-radius:4px;padding:0 3px;">${tw[i]}</span>`:`<span style="color:#d33;">▢</span>`); i++;miss++; }
   }
@@ -4796,12 +4796,12 @@ function lesTestMic(){
   const y=T.pairs[T.turn].y.en;
   const fin=txt=>{ if(done) return; done=true; clearTimeout(to); recognizing=false; T.listening=false; if(txt===null){ T.err=true; render(); return; } lesTestJudge(txt); };
   const to=setTimeout(()=>{ try{r.abort();}catch(e){} fin(null); },8000);
-  r.onresult=e=>{ let best='',bp=-1; for(let a=0;a<e.results[0].length;a++){ const tx=e.results[0][a].transcript, g=gradeFreeText(tx,[y]); if(g.pct>bp){ bp=g.pct; best=tx; } } fin(best); };
+  r.onresult=e=>{ let best='',bp=-1; for(let a=0;a<e.results[0].length;a++){ const tx=e.results[0][a].transcript, g=gradeSpoken(tx,[y]); if(g.pct>bp){ bp=g.pct; best=tx; } } fin(best); };
   r.onerror=()=>fin(null); r.onend=()=>{ recognizing=false; if(!done) fin(null); };
   try{ r.start(); }catch(e){ fin(null); }
 }
 function lesTestJudge(txt){
-  const T=les.t, p=T.pairs[T.turn], g=gradeFreeText(txt,[p.y.en]), ok=g.pct>=LTEST_PASS;
+  const T=les.t, p=T.pairs[T.turn], g=gradeSpoken(txt,[p.y.en]), ok=g.pct>=LTEST_PASS;
   T.heard=txt; T.pct=g.pct; T.tries++; sfx(ok?'ok':'bad'); skillLog('S',ok);
   if(ok){ T.st='pass'; T.log[T.round-1][T.turn]=(T.tries===1&&!T.hint1)?'clean':'ok'; addXP(T.tries===1?2:1); }
   else if(T.tries>=2){ T.st='fail'; T.log[T.round-1][T.turn]='fail'; }
@@ -4821,7 +4821,7 @@ function lesTestHtml(head){
   if(!T.pairs.length){ lesGo('quiz'); return ''; }
   const R=T.round;
   if(T.intro) return head+`<div style="text-align:center;"><div style="font-size:2.6rem;">${T.mix?'🤝':'🎭'}</div><h2 class="intro-title" style="justify-content:center;">${T.mix?'Giả lập khách thật':'Thử thách hội thoại'}</h2></div>
-  <div class="sc-card"><div class="les-k">CÁCH CHƠI</div><p>1. Khách nói một câu (nghe bằng loa).<br>2. Bạn <b>tự nói</b> câu đáp. Câu mẫu bị ẩn, giống ngoài đời.<br>3. App chấm độ khớp. <b>Từ 70% là qua.</b><br>4. Chưa qua: ${T.mix?'nói lại cả câu một lần nữa.':'app gợi ý thứ tự đúng để nói lại (vòng 1–2).'}</p></div>
+  <div class="sc-card"><div class="les-k">CÁCH CHƠI</div><p>1. Khách nói một câu (nghe bằng loa).<br>2. Bạn <b>tự nói</b> câu đáp. Câu mẫu bị ẩn, giống ngoài đời.<br>3. App chấm độ khớp. <b>Từ 60% là qua.</b><br>4. Chưa qua: ${T.mix?'nói lại cả câu một lần nữa.':'app gợi ý thứ tự đúng để nói lại (vòng 1–2).'}</p></div>
   <div class="sc-card"><div class="les-k">${T.mix?'8 TÌNH HUỐNG NGẪU NHIÊN':'3 VÒNG, KHÓ DẦN'}</div><p>${T.mix?'Lấy từ mọi chủ đề. Không chữ, không gợi ý, nói cả câu rồi mới chấm.':'Vòng 1: có chữ + nghĩa.<br>Vòng 2: chỉ có chữ.<br>Vòng 3: chỉ nghe, không gợi ý, như khách thật.'}</p></div>
   <div class="sc-card"><div class="les-k">MẸO</div><p>Nói thành <b>câu đủ</b> (có chủ ngữ + động từ), không nói rời từng từ. Cần mic: dùng Chrome qua link GitHub Pages, bấm "Cho phép" khi trình duyệt hỏi. Nói chậm và rõ còn tốt hơn nói nhanh.</p></div>
   <button class="btn-primary" onclick="lesTestStart()">Bắt đầu →</button></div>`;
@@ -4881,9 +4881,9 @@ function pdMic(){
   const r=new SR(); r.lang='en-US'; r.interimResults=false; r.maxAlternatives=3; recognizing=true; PD.listening=true; PD.err=false; pdRender(); let done=false;
   const tg=pdTarget();
   const fin=txt=>{ if(done) return; done=true; clearTimeout(to); recognizing=false; if(!PD) return; PD.listening=false; if(txt===null){ PD.err=true; pdRender(); return; }
-    const g=gradeFreeText(txt,[tg]); PD.heard=txt; PD.pct=g.pct; PD.st=g.pct>=70?'pass':'retry'; sfx(g.pct>=70?'ok':'bad'); skillLog('S',g.pct>=70); pdRender(); };
+    const g=gradeSpoken(txt,[tg]); PD.heard=txt; PD.pct=g.pct; PD.st=g.pct>=60?'pass':'retry'; sfx(g.pct>=60?'ok':'bad'); skillLog('S',g.pct>=60); pdRender(); };
   const to=setTimeout(()=>{ try{r.abort();}catch(e){} fin(null); },8000);
-  r.onresult=e=>{ let best='',bp=-1; for(let a=0;a<e.results[0].length;a++){ const tx=e.results[0][a].transcript, g=gradeFreeText(tx,[tg]); if(g.pct>bp){ bp=g.pct; best=tx; } } fin(best); };
+  r.onresult=e=>{ let best='',bp=-1; for(let a=0;a<e.results[0].length;a++){ const tx=e.results[0][a].transcript, g=gradeSpoken(tx,[tg]); if(g.pct>bp){ bp=g.pct; best=tx; } } fin(best); };
   r.onerror=()=>fin(null); r.onend=()=>{ recognizing=false; if(!done) fin(null); };
   try{ r.start(); }catch(e){ fin(null); }
 }
@@ -4906,7 +4906,28 @@ function pdRender(){
   else if(PD.err) fb='<div class="feedback bad">Không nghe được. Bấm nói lại (cần Chrome + cho phép mic).</div>';
   else if(d) fb=`<div class="feedback ${PD.st==='pass'?'good':'bad'}">${PD.st==='pass'?'✓ Tốt! ':'Chưa khớp. '}(${PD.pct}%)</div><div class="sc-card" style="margin:8px 0;"><div class="les-k">APP NGHE ĐƯỢC</div><div style="font-size:1.05rem;line-height:1.7;">${d.h}</div><div class="les-k" style="margin-top:8px;">ĐÚNG LÀ</div><div style="font-size:1.05rem;line-height:1.7;">${d.t}</div></div>`;
   const ctl=(PD.st==='pass')?`<button class="btn-primary" onclick="pdNext()">Tiếp →</button>`:`<div class="les-ctrl"><button class="btn-primary" onclick="pdMic()">🎙️ Nói cụm này</button><button class="btn-secondary" onclick="pdSay()">🐌 Nghe lại thật chậm</button>${PD.st==='retry'?'<button class="btn-secondary" onclick="pdNext()">Bỏ qua →</button>':''}</div>`;
-  ov.innerHTML=`<div style="max-width:560px;margin:0 auto;"><div style="display:flex;justify-content:space-between;align-items:center;"><div class="item-count">🐌 Tập nói từng cụm, thật chậm</div><button class="btn-secondary" onclick="pdClose()">✕ Đóng</button></div><p class="sc-vi">${title}. Nghe thật chậm → nói theo → app chấm. Từ 70% là qua.</p><div class="sc-card"><div class="les-k">CÂU ĐẦY ĐỦ</div><div style="line-height:1.9;">${shown}</div></div><div class="sim-bubble"><div class="sc-vi">${PD.mode==='one'?'Nói cụm này:':'Nói liền các cụm đã học:'}</div><strong style="font-size:1.25rem;">${tg}</strong></div>${fb}${ctl}<p class="sc-vi" style="margin-top:10px;">Mẹo: người bản xứ nói nhanh vì nối âm. Bạn cứ nói chậm, <b>đủ từng chữ</b> trước, rồi mới tăng tốc.</p></div>`;
+  ov.innerHTML=`<div style="max-width:560px;margin:0 auto;"><div style="display:flex;justify-content:space-between;align-items:center;"><div class="item-count">🐌 Tập nói từng cụm, thật chậm</div><button class="btn-secondary" onclick="pdClose()">✕ Đóng</button></div><p class="sc-vi">${title}. Nghe thật chậm → nói theo → app chấm. Từ 60% là qua.</p><div class="sc-card"><div class="les-k">CÂU ĐẦY ĐỦ</div><div style="line-height:1.9;">${shown}</div></div><div class="sim-bubble"><div class="sc-vi">${PD.mode==='one'?'Nói cụm này:':'Nói liền các cụm đã học:'}</div><strong style="font-size:1.25rem;">${tg}</strong></div>${fb}${ctl}<p class="sc-vi" style="margin-top:10px;">Mẹo: người bản xứ nói nhanh vì nối âm. Bạn cứ nói chậm, <b>đủ từng chữ</b> trước, rồi mới tăng tốc.</p></div>`;
+}
+
+/* ============ CHẤM NÓI: DỄ TÍNH NHƯ NGƯỜI THẬT (nghe ý chính, bỏ qua lỗi nhỏ) ============ */
+const GS_EXP={"i'm":"i am","it's":"it is","we're":"we are","you're":"you are","they're":"they are","that's":"that is","what's":"what is","there's":"there is","here's":"here is","let's":"let us","don't":"do not","doesn't":"does not","didn't":"did not","can't":"can not","cannot":"can not","won't":"will not","isn't":"is not","aren't":"are not","wasn't":"was not","couldn't":"could not","wouldn't":"would not","shouldn't":"should not","gonna":"going to","wanna":"want to","gotta":"got to","hafta":"have to","lemme":"let me","gimme":"give me","dunno":"do not know","kinda":"kind of","sorta":"sort of","coulda":"could have","shoulda":"should have","woulda":"would have","gotcha":"got you","'cause":"because","cuz":"because","okay":"ok","thanks":"thank you","i'll":"i will","we'll":"we will","you'll":"you will","it'll":"it will","i've":"i have","we've":"we have","you've":"you have","i'd":"i would","we'd":"we would"};
+const GS_FUNC=new Set("a an the is are am was were be to of in on at for and or but so it its this that these those i you we they he she me my your our their us them do does did has have had will would can could with from by as if then there here very just".split(' '));
+function gsTok(t){
+  let s=(t||'').toLowerCase().replace(/[’`]/g,"'").replace(/[^a-z0-9'\s]/g,' ');
+  const out=[]; s.split(/\s+/).filter(Boolean).forEach(w=>{ const e=GS_EXP[w]; if(e) e.split(' ').forEach(x=>out.push(x)); else out.push(w.replace(/^'+|'+$/g,'')); });
+  return out.filter(Boolean);
+}
+function gsLev(a,b){ const m=a.length,n=b.length; if(Math.abs(m-n)>2) return 9; const d=[]; for(let i=0;i<=m;i++){ d[i]=[i]; } for(let j=1;j<=n;j++) d[0][j]=j; for(let i=1;i<=m;i++) for(let j=1;j<=n;j++) d[i][j]=Math.min(d[i-1][j]+1,d[i][j-1]+1,d[i-1][j-1]+(a[i-1]===b[j-1]?0:1)); return d[m][n]; }
+function gsNear(a,b){ if(a===b) return true; const L=Math.min(a.length,b.length); if(L<3) return false; if(a.replace(/s$/,'')===b.replace(/s$/,'')) return true; return gsLev(a,b)<=(L>=7?2:(L>=4?1:0)); }
+function gradeSpoken(user,acceptedList){
+  let best=0,bestAcc=acceptedList[0];
+  acceptedList.forEach(acc=>{
+    const tw=gsTok(acc), hw=gsTok(user).slice(); let tot=0,got=0;
+    tw.forEach(w=>{ const wt=GS_FUNC.has(w)?0.35:1; tot+=wt; let k=hw.findIndex(h=>gsNear(h,w)); if(k>=0){ got+=wt; hw.splice(k,1); } });
+    const o=tot?got/tot:0; if(o>best){ best=o; bestAcc=acc; }
+  });
+  const pct=Math.round(best*100);
+  return {tier:pct>=85?'correct':(pct>=50?'close':'wrong'),pct,bestAcc};
 }
 
 let les = null;
@@ -4983,8 +5004,8 @@ function lesMic(k){
   const to=setTimeout(()=>{ if(settled) return; settled=true; recognizing=false; try{r.abort();}catch(e){} les.spk={k,st:'error'}; render(); },7000);
   r.onresult = e=>{
     if(settled) return; settled=true; clearTimeout(to); recognizing=false;
-    let best=0, heard=''; for(let a=0;a<e.results[0].length;a++){ const t=e.results[0][a].transcript, g=gradeFreeText(t,[target]); if(g.pct>=best){ best=g.pct; heard=t; } }
-    const ok = best>=70; sfx(ok?'ok':'bad'); skillLog('S', ok); if(ok) addXP(2);
+    let best=0, heard=''; for(let a=0;a<e.results[0].length;a++){ const t=e.results[0][a].transcript, g=gradeSpoken(t,[target]); if(g.pct>=best){ best=g.pct; heard=t; } }
+    const ok = best>=60; sfx(ok?'ok':'bad'); skillLog('S', ok); if(ok) addXP(2);
     les.spk={k,st:'done',pct:best,heard,ok}; render();
   };
   r.onerror=()=>{ if(settled) return; settled=true; clearTimeout(to); recognizing=false; les.spk={k,st:'error'}; render(); };
@@ -6404,7 +6425,7 @@ function renderLoading(){
   return '<div class="loading">Đang mở sổ hộ chiếu...</div>';
 }
 
-const APP_VERSION = 'v72';
+const APP_VERSION = 'v73';
 function headerHtml(showHome){
   const strip = SKILL_ORDER.map(sk=>`<span class="visa-item">${svgIcon(SKILL_ICON[sk],14)}${SKILL_LABEL[sk]}</span>`).join('');
   return `
