@@ -4704,17 +4704,17 @@ function lesOrderPieces(en){
 function lesTestInit(){
   const L=LESSONS[les.i], pairs=[];
   L.lines.forEach((x,k)=>{ if(x.w==='C' && L.lines[k+1] && L.lines[k+1].w==='Y') pairs.push({c:x,y:L.lines[k+1],k:k+1}); });
-  les.t={i:les.i,pairs:pairs.slice(0,6),round:1,turn:0,tries:0,st:'ask',hint1:false,heard:'',pct:0,log:[[],[],[]],typed:false,listening:false,err:false,nosr:false,sum:false};
-  setTimeout(lesTestSay,350);
+  les.t={i:les.i,pairs:pairs.slice(0,6),round:1,turn:0,tries:0,st:'ask',hint1:false,heard:'',pct:0,log:[[],[],[]],typed:false,listening:false,err:false,nosr:false,sum:false,intro:true};
 }
 function lesMixStart(){
   stopLesson(); const pool=[];
   LESSONS.forEach(L=>L.lines.forEach((x,k)=>{ if(x.w==='C'&&L.lines[k+1]&&L.lines[k+1].w==='Y') pool.push({c:x,y:L.lines[k+1],cl:L.client,yo:L.you}); }));
   les={i:0,step:'test',token:0,sub:0,slow:false,pos:0,picked:null,right:0,spk:null,qs:null,rung:3,bld:null,hint:false,mix:true};
-  les.t={i:0,pairs:shuffleArr(pool).slice(0,8),round:3,turn:0,tries:0,st:'ask',hint1:false,heard:'',pct:0,log:[[],[],[]],typed:false,listening:false,err:false,nosr:false,sum:false,mix:true};
-  state.view='lesson'; render(); window.scrollTo(0,0); setTimeout(lesTestSay,400);
+  les.t={i:0,pairs:shuffleArr(pool).slice(0,8),round:3,turn:0,tries:0,st:'ask',hint1:false,heard:'',pct:0,log:[[],[],[]],typed:false,listening:false,err:false,nosr:false,sum:false,mix:true,intro:true};
+  state.view='lesson'; render(); window.scrollTo(0,0); 
 }
-function lesTestSay(){ const T=les.t; if(!T||les.step!=='test'||T.sum) return; const p=T.pairs[T.turn]; if(p) speak(p.c.en); }
+function lesTestStart(){ const T=les.t; T.intro=false; render(); window.scrollTo(0,0); setTimeout(lesTestSay,300); }
+function lesTestSay(){ const T=les.t; if(!T||les.step!=='test'||T.sum||T.intro) return; const p=T.pairs[T.turn]; if(p) speak(p.c.en); }
 function lesTestHint1(){ les.t.hint1=true; render(); }
 function lesTestType(){ les.t.typed=true; render(); }
 function lesTestCheck(){ const el=document.getElementById('tt-in'); const v=el?el.value:''; if(!v.trim()) return; lesTestJudge(v); }
@@ -4750,6 +4750,11 @@ function lesTestHtml(head){
   const T=les.t, L=LESSONS[les.i];
   if(!T.pairs.length){ lesGo('quiz'); return ''; }
   const R=T.round;
+  if(T.intro) return head+`<div style="text-align:center;"><div style="font-size:2.6rem;">${T.mix?'🤝':'🎭'}</div><h2 class="intro-title" style="justify-content:center;">${T.mix?'Giả lập khách thật':'Thử thách hội thoại'}</h2></div>
+  <div class="sc-card"><div class="les-k">CÁCH CHƠI</div><p>1. Khách nói một câu (nghe bằng loa).<br>2. Bạn <b>tự nói</b> câu đáp. Câu mẫu bị ẩn, giống ngoài đời.<br>3. App chấm độ khớp. <b>Từ 70% là qua.</b><br>4. Chưa qua: ${T.mix?'nói lại cả câu một lần nữa.':'app gợi ý thứ tự đúng để nói lại (vòng 1–2).'}</p></div>
+  <div class="sc-card"><div class="les-k">${T.mix?'8 TÌNH HUỐNG NGẪU NHIÊN':'3 VÒNG, KHÓ DẦN'}</div><p>${T.mix?'Lấy từ mọi chủ đề. Không chữ, không gợi ý, nói cả câu rồi mới chấm.':'Vòng 1: có chữ + nghĩa.<br>Vòng 2: chỉ có chữ.<br>Vòng 3: chỉ nghe, không gợi ý, như khách thật.'}</p></div>
+  <div class="sc-card"><div class="les-k">MẸO</div><p>Nói thành <b>câu đủ</b> (có chủ ngữ + động từ), không nói rời từng từ. Cần mic: dùng Chrome qua link GitHub Pages, bấm "Cho phép" khi trình duyệt hỏi. Nói chậm và rõ còn tốt hơn nói nhanh.</p></div>
+  <button class="btn-primary" onclick="lesTestStart()">Bắt đầu →</button></div>`;
   if(T.sum){
     const clean=T.log[R-1].filter(x=>x==='clean').length, okc=T.log[R-1].filter(x=>x==='ok').length, bad=T.log[R-1].filter(x=>x==='fail').length, N=T.pairs.length;
     const weak=T.pairs.filter((p,i)=>T.log[R-1][i]!=='clean');
@@ -4886,7 +4891,7 @@ function renderLessons(){
       <button class="btn-secondary" style="width:100%;margin-bottom:6px;" onclick="startEx4(${L.n})">🏆 Thi ${passed?'lại ':''}Cấp ${L.n}${L.n>1&&!open?' (thi thẳng để lên cấp)':''}</button>`; }).join('');
   const b0 = `<div class="les-grp">Cấp 0 · Nền tảng (như trẻ học) ${bsAllDone()?'· ✅':''}</div><p class="sc-vi" style="margin:0 2px 8px;">10 bước nhỏ, mỗi bước 3 phút: hiểu 1 điều → thử 3 câu → dùng với khách. Đã học ${BASICS.filter(m=>bsDone(m.id)).length}/${BASICS.length}.</p>${BASICS.map((m,i)=>`<button class="les-card ${bsDone(m.id)?'done':''}" onclick="startBasic(${i})"><div class="les-ic">${m.icon}</div><div class="les-t"><strong>${m.t}</strong><span>${m.s}</span></div><div class="les-ck">${bsDone(m.id)?'✓':'▶'}</div></button>`).join('')}`;
   return `${headerHtml(false)}<div class="pages"><button class="home-link" style="margin-bottom:12px;color:var(--navy);border-color:var(--navy);" onclick="goHome()">← Trang chủ</button>
-  <h2 class="intro-title">🗺️ Lộ trình ${LESSONS.length} bài</h2><p class="sc-vi">Mỗi bài ~20 phút, đủ 4 kỹ năng: xem cảnh (nghe) → học 4 khuôn → nói 4 bậc → nghe chép + viết → thử thách hội thoại 3 vòng → quiz. Học hết bài của cấp rồi thi: đạt cả 4 kỹ năng (≥80%) để mở cấp tiếp.</p>${b0}${blocks}</div>`;
+  <h2 class="intro-title">🗺️ Lộ trình ${LESSONS.length} bài</h2><p class="sc-vi">Mỗi bài ~20 phút: Xem → Khuôn → Nói → Viết → Thử (hội thoại 3 vòng) → Quiz. Học hết bài của cấp rồi thi: đạt cả 4 kỹ năng (≥80%) để mở cấp tiếp.</p>${b0}${blocks}</div>`;
 }
 function renderLesson(){
   const L = LESSONS[les.i];
@@ -6276,7 +6281,7 @@ function renderLoading(){
   return '<div class="loading">Đang mở sổ hộ chiếu...</div>';
 }
 
-const APP_VERSION = 'v68';
+const APP_VERSION = 'v69';
 function headerHtml(showHome){
   const strip = SKILL_ORDER.map(sk=>`<span class="visa-item">${svgIcon(SKILL_ICON[sk],14)}${SKILL_LABEL[sk]}</span>`).join('');
   return `
@@ -6341,6 +6346,7 @@ function renderHome(){
   ${headerHtml(false)}
   <div class="pages">
     ${homeHeroHtml()}
+    <details class="more47" style="margin:14px 0;"><summary style="font-weight:700;cursor:pointer;">❓ Cách học trên app này</summary><div class="sc-card" style="margin-top:8px;"><p><b>Mỗi bài ~20 phút, 6 bước:</b><br>1 Xem: nghe khách thật nói, bấm vào từ/câu bất kỳ để xem nghĩa và cách dùng.<br>2 Khuôn: học 4 khuôn câu dùng được ngay.<br>3 Nói: 4 bậc từ dễ đến khó, có ghi âm và chấm điểm.<br>4 Viết: nghe chép, ráp câu.<br>5 Thử: khách nói, bạn tự đáp, 3 vòng, vòng cuối không gợi ý.<br>6 Quiz: kiểm tra, có giải thích sau mỗi câu.</p><p><b>Mỗi ngày:</b> 1 bước hôm nay + 1 lượt "Giả lập khách" là đủ.<br><b>Mic:</b> chỉ chạy trong Chrome qua link GitHub Pages.<br><b>Từ lạ:</b> bấm vào từ để xem nghĩa. Câu nào chưa nói trôi sẽ vào nút "câu yếu" để ôn lại.</p></div></details>
     <div class="footer-reset"><button onclick="if(confirm('Xóa toàn bộ tiến trình đã lưu?')) resetAllProgress()">Xóa tiến trình đã lưu</button></div>
   </div>`;
 }
