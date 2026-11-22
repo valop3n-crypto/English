@@ -4435,10 +4435,10 @@ function lesWCheck(){
   const g=gradeFreeText(val,[en]), ok=g.pct>=85; sfx(ok?'ok':'bad'); skillLog(it.t==='dict'?'L':'W', ok); if(ok) addXP(2);
   les.wres={pct:g.pct,ok,val,miss:diffMissingWords(val,en)}; render();
 }
-function lesWNext(){ les.pos++; les.wres=null; les.hint=false; if(les.pos>=lesWItems().length){ lesGo('quiz'); return; } render(); window.scrollTo(0,0); }
+function lesWNext(){ les.pos++; les.wres=null; les.hint=false; if(les.pos>=lesWItems().length){ lesGo('test'); return; } render(); window.scrollTo(0,0); }
 function lesWriteHtml(head){
   const L=LESSONS[les.i], items=lesWItems();
-  if(les.pos>=items.length){ lesGo('quiz'); return ''; }
+  if(les.pos>=items.length){ lesGo('test'); return ''; }
   const it=items[les.pos], x=L.lines[it.k], r=les.wres, q=x.en.replace(/'/g,"\\'");
   const bar=`<div class="item-count">${it.t==='dict'?'Nghe chép':'Viết từ nghĩa'} · ${les.pos+1}/${items.length}</div><p class="sc-vi">${it.t==='dict'?'Nghe câu của bạn rồi gõ lại đúng những gì nghe được. Nghe nhiều lần cũng được.':'Chỉ có nghĩa tiếng Việt. Tự viết câu tiếng Anh, dùng khuôn đã học.'}</p>`;
   const top = it.t==='dict'
@@ -4691,11 +4691,93 @@ function fullExplainHtml(parts){
   return `<details class="lx" open style="margin:10px 0;"><summary>📖 Giải thích đầy đủ</summary>${blocks}</details>`;
 }
 
+/* ============ THỬ THÁCH HỘI THOẠI: khách nói → bạn tự đáp (ẩn đáp án) → chấm → gợi ý thứ tự → lặp 3 vòng ============ */
+const LTEST_PASS = 70;
+const LTEST_ROUNDS = [['Vòng 1','Khách nói có chữ + nghĩa. Bạn tự đáp, không thấy câu mẫu.'],['Vòng 2','Chỉ còn chữ của khách, không có nghĩa.'],['Vòng 3','Chỉ NGHE khách nói, không có chữ. Như gặp khách thật.']];
+function lesOrderPieces(en){
+  const parts=en.replace(/\s+/g,' ').split(/(?<=[.?!,])\s+/), out=[];
+  parts.forEach(p=>{ const w=p.split(' '); if(w.length<=6){ out.push(p); return; }
+    const i=w.findIndex((x,j)=>j>=3 && j<=w.length-3 && /^(and|but|for|on|at|in|with|to|from|by|within|before|after|if|so|because)$/i.test(x));
+    if(i>0){ out.push(w.slice(0,i).join(' ')); out.push(w.slice(i).join(' ')); } else out.push(p); });
+  return out;
+}
+function lesTestInit(){
+  const L=LESSONS[les.i], pairs=[];
+  L.lines.forEach((x,k)=>{ if(x.w==='C' && L.lines[k+1] && L.lines[k+1].w==='Y') pairs.push({c:x,y:L.lines[k+1],k:k+1}); });
+  les.t={i:les.i,pairs:pairs.slice(0,6),round:1,turn:0,tries:0,st:'ask',hint1:false,heard:'',pct:0,log:[[],[],[]],typed:false,listening:false,err:false,nosr:false,sum:false};
+  setTimeout(lesTestSay,350);
+}
+function lesTestSay(){ const T=les.t; if(!T||les.step!=='test'||T.sum) return; const p=T.pairs[T.turn]; if(p) speak(p.c.en); }
+function lesTestHint1(){ les.t.hint1=true; render(); }
+function lesTestType(){ les.t.typed=true; render(); }
+function lesTestCheck(){ const el=document.getElementById('tt-in'); const v=el?el.value:''; if(!v.trim()) return; lesTestJudge(v); }
+function lesTestMic(){
+  const T=les.t, SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){ T.nosr=true; T.typed=true; render(); return; }
+  if(recognizing) return; try{ speechSynthesis.cancel(); }catch(e){}
+  const r=new SR(); r.lang='en-US'; r.interimResults=false; r.maxAlternatives=3; recognizing=true; T.listening=true; T.err=false; render(); let done=false;
+  const y=T.pairs[T.turn].y.en;
+  const fin=txt=>{ if(done) return; done=true; clearTimeout(to); recognizing=false; T.listening=false; if(txt===null){ T.err=true; render(); return; } lesTestJudge(txt); };
+  const to=setTimeout(()=>{ try{r.abort();}catch(e){} fin(null); },8000);
+  r.onresult=e=>{ let best='',bp=-1; for(let a=0;a<e.results[0].length;a++){ const tx=e.results[0][a].transcript, g=gradeFreeText(tx,[y]); if(g.pct>bp){ bp=g.pct; best=tx; } } fin(best); };
+  r.onerror=()=>fin(null); r.onend=()=>{ recognizing=false; if(!done) fin(null); };
+  try{ r.start(); }catch(e){ fin(null); }
+}
+function lesTestJudge(txt){
+  const T=les.t, p=T.pairs[T.turn], g=gradeFreeText(txt,[p.y.en]), ok=g.pct>=LTEST_PASS;
+  T.heard=txt; T.pct=g.pct; T.tries++; sfx(ok?'ok':'bad'); skillLog('S',ok);
+  if(ok){ T.st='pass'; T.log[T.round-1][T.turn]=(T.tries===1&&!T.hint1)?'clean':'ok'; addXP(T.tries===1?2:1); }
+  else if(T.tries>=2){ T.st='fail'; T.log[T.round-1][T.turn]='fail'; }
+  else T.st='hint';
+  render();
+}
+function lesTestNext(){
+  const T=les.t; T.turn++; T.tries=0; T.st='ask'; T.hint1=false; T.heard=''; T.typed=false; T.err=false;
+  if(T.turn>=T.pairs.length){ T.sum=true; if(T.round>=3){ lesState.tst=lesState.tst||{}; const L=LESSONS[les.i]; lesState.tst[L.id]={d:localDay(),r:T.log.map(r=>Math.round(100*r.filter(x=>x==='clean').length/Math.max(1,T.pairs.length)))}; saveLessons(); sfx('win'); } }
+  else setTimeout(lesTestSay,300);
+  render(); window.scrollTo(0,0);
+}
+function lesTestRound(){ const T=les.t; T.round++; T.turn=0; T.tries=0; T.st='ask'; T.sum=false; T.hint1=false; T.typed=false; setTimeout(lesTestSay,350); render(); window.scrollTo(0,0); }
+function lesTestHtml(head){
+  if(!les.t || les.t.i!==les.i) lesTestInit();
+  const T=les.t, L=LESSONS[les.i];
+  if(!T.pairs.length){ lesGo('quiz'); return ''; }
+  const R=T.round;
+  if(T.sum){
+    const clean=T.log[R-1].filter(x=>x==='clean').length, okc=T.log[R-1].filter(x=>x==='ok').length, bad=T.log[R-1].filter(x=>x==='fail').length, N=T.pairs.length;
+    const weak=T.pairs.filter((p,i)=>T.log[R-1][i]!=='clean');
+    const weakH=weak.length?`<div class="les-k" style="margin:10px 0 4px;">CÂU CẦN NÓI LẠI CHO TRÔI</div>${weak.map(p=>`<div class="sc-card" style="margin-bottom:8px;"><div class="sc-alt" style="margin:0;">${listenSlowPair(p.y.en)}<div class="t"><strong>${p.y.en}</strong><i>${p.y.vi}</i></div></div><div class="lx-r">⚡ Thứ tự: ${lesOrderPieces(p.y.en).map((x,i)=>`${i+1}) ${x}`).join('  ')}</div></div>`).join('')}`:'';
+    if(R<3) return head+`<div style="text-align:center;"><div style="font-size:2.6rem;">${clean>=N-1?'🏅':'💪'}</div><h2 class="intro-title" style="justify-content:center;">Xong ${LTEST_ROUNDS[R-1][0]}</h2><p>Đúng ngay lần đầu: <b>${clean}/${N}</b> · Đúng sau khi gợi ý: ${okc} · Chưa được: ${bad}</p></div>${weakH}<p class="sc-vi">Vòng sau khó hơn: ${LTEST_ROUNDS[R][1]}</p><button class="btn-primary" onclick="lesTestRound()">Sang ${LTEST_ROUNDS[R][0]} →</button></div>`;
+    const sc=T.log.map(r=>Math.round(100*r.filter(x=>x==='clean').length/N));
+    return head+`<div style="text-align:center;"><div style="font-size:3rem;">${sc[2]>=80?'🏆':'💪'}</div><h2 class="intro-title" style="justify-content:center;">Xong 3 vòng!</h2></div>${[0,1,2].map(i=>`<div style="margin:8px 0;"><div style="display:flex;justify-content:space-between;font-weight:700;"><span>${LTEST_ROUNDS[i][0]}</span><span>${sc[i]}%</span></div><div style="background:#e6e9f8;border-radius:8px;height:12px;overflow:hidden;"><div style="width:${sc[i]}%;height:100%;background:${sc[i]>=80?'var(--green)':'var(--gold)'};"></div></div></div>`).join('')}<p class="sc-vi">% = số câu bạn đáp đúng ngay lần đầu, không cần gợi ý. Vòng 3 đạt từ 80% nghĩa là bạn đã sẵn sàng với khách thật. Chưa đạt thì làm lại bước này vào ngày mai.</p>${weakH}<button class="btn-primary" onclick="lesGo('quiz')">Sang quiz cuối bài →</button><button class="btn-secondary" onclick="lesTestInit();render()">Làm lại 3 vòng</button></div>`;
+  }
+  const p=T.pairs[T.turn], hideText=(R===3&&T.st==='ask'||R===3&&T.st==='hint');
+  const showVi=(R===1)||T.st==='pass'||T.st==='fail';
+  const cbox=`<div class="sim-bubble"><div class="sc-vi">${L.client} nói:</div>${hideText?'<div style="font-size:1.1rem;">🎧 Bấm nghe để biết khách nói gì</div>':`<strong style="font-size:1.1rem;">${p.c.en}</strong>`}${showVi&&!hideText?`<div class="sc-vi">${p.c.vi}</div>`:''}<div style="margin-top:6px;"><span style="display:inline-flex;gap:6px;"><button class="phrase-play" onclick="speak(${JSON.stringify(p.c.en).replace(/"/g,'&quot;')})">${svgIcon('headphones',16)}</button><button class="phrase-play" onclick="speakSlow(${JSON.stringify(p.c.en).replace(/"/g,'&quot;')})">🐢</button></span></div></div>`;
+  const bar=`<div class="item-count">Thử thách · ${LTEST_ROUNDS[R-1][0]}/3 · lượt ${T.turn+1}/${T.pairs.length}</div><p class="sc-vi">${LTEST_ROUNDS[R-1][1]} Đạt từ ${LTEST_PASS}% là qua.</p>`;
+  const you=`<div class="sim-bubble me"><div class="sc-vi">${L.you} (bạn) đáp lại: <b>nội dung đang ẩn</b></div>${T.hint1&&T.st==='ask'?`<div style="margin-top:6px;">💡 Ý cần nói: <b>${p.y.vi}</b></div>`:''}</div>`;
+  const pieces=`<div class="lx-r">⚡ <b>Nói theo thứ tự này:</b><br>${lesOrderPieces(p.y.en).map((x,i)=>`<span class="slot" style="margin:3px 4px 3px 0;display:inline-block;">${i+1}</span> ${x}`).join('<br>')}</div><div class="sc-vi" style="margin-top:6px;">Nghĩa: ${p.y.vi}</div>`;
+  let fb='';
+  if(T.listening) fb='<div class="feedback mid">🎙️ Đang nghe… hãy nói.</div>';
+  else if(T.err) fb='<div class="feedback bad">Không nghe được. Bấm nói lại, hoặc gõ câu trả lời.</div>';
+  else if(T.nosr) fb='<div class="feedback mid">Thiết bị này không nhận giọng nói. Hãy gõ câu trả lời.</div>';
+  if(T.st==='hint') fb+=`<div class="feedback bad">Chưa đủ khớp (${T.pct}%). Bạn nói: "${T.heard}"</div>${pieces}${listenSlowPair(p.y.en)}`;
+  if(T.st==='pass') fb=`<div class="feedback good">✓ Qua! (${T.pct}%) ${T.tries===1?'Đúng ngay lần đầu.':'Đúng sau khi gợi ý.'}</div><div class="sim-bubble"><div class="sc-vi">Câu mẫu:</div><strong>${p.y.en}</strong> ${listenSlowPair(p.y.en)}<div class="sc-vi">${p.y.vi}</div></div>`;
+  if(T.st==='fail') fb=`<div class="feedback bad">Chưa qua (${T.pct}%). Bạn nói: "${T.heard}"</div>${pieces}${listenSlowPair(p.y.en)}<p class="sc-vi">Đọc to câu này 2 lần rồi bấm tiếp. Câu này sẽ quay lại ở vòng sau.</p>`;
+  let ctrl='';
+  if(T.st==='ask'||T.st==='hint'){
+    ctrl = (T.typed||T.nosr)
+      ? `<textarea id="tt-in" rows="2" style="width:100%;padding:10px;border-radius:12px;border:2px solid var(--navy);font-size:1.05rem;margin:8px 0;" placeholder="Gõ câu trả lời bằng tiếng Anh…" autocapitalize="off" spellcheck="false"></textarea><div class="les-ctrl"><button class="btn-primary" onclick="lesTestCheck()">Kiểm tra</button></div>`
+      : `<div class="les-ctrl"><button class="btn-primary" onclick="lesTestMic()">🎙️ ${T.st==='hint'?'Nói lại':'Nói câu trả lời'}</button><button class="btn-secondary" onclick="lesTestType()">⌨️ Gõ thay vì nói</button>${T.st==='ask'&&!T.hint1?'<button class="btn-secondary" onclick="lesTestHint1()">💡 Gợi ý ý nghĩa</button>':''}</div>`;
+  } else ctrl=`<button class="btn-primary" onclick="lesTestNext()">${T.turn+1>=T.pairs.length?'Xem kết quả vòng':'Lượt tiếp →'}</button>`;
+  return head+bar+cbox+you+fb+ctrl+'</div>';
+}
+
 let les = null;
 function openLessons(){ state.view='lessons'; render(); }
 function startLesson(i, step){ if(!lvUnlocked(lvOf(LESSONS[i].id))){ openLessons(); return; } stopLesson(); les = {i, step:step||'watch', token:0, sub:0, slow:false, pos:0, picked:null, right:0, spk:null, qs:null, rung:1, bld:null, hint:false}; state.view='lesson'; render(); window.scrollTo(0,0); if(les.step==='watch') setTimeout(playLesson,500); }
 function stopLesson(){ if(les) les.token=0; try{ speechSynthesis.cancel(); }catch(e){} }
-function lesGo(step){ stopLesson(); les.step=step; les.pos=0; les.picked=null; les.spk=null; les.rung=1; les.bld=null; les.hint=false; les.wres=null; if(step==='quiz'){ les.qs=lesBuildQuiz(); les.right=0; } render(); window.scrollTo(0,0); if(step==='watch') setTimeout(playLesson,400); }
+function lesGo(step){ stopLesson(); les.step=step; les.pos=0; les.picked=null; les.spk=null; les.rung=1; les.bld=null; les.hint=false; les.wres=null; les.t=null; if(step==='quiz'){ les.qs=lesBuildQuiz(); les.right=0; } render(); window.scrollTo(0,0); if(step==='watch') setTimeout(playLesson,400); }
 function lesLineUI(k){
   const L = LESSONS[les.i].lines[k];
   const c=document.getElementById('les-c'), y=document.getElementById('les-y'); if(!c) return;
@@ -4783,7 +4865,7 @@ function lesBldUndo(id){ const b=les.bld; if(!b||b.st==='ok') return; b.sel=b.se
 function lesBldReset(){ const b=les.bld; b.sel=[]; b.st=''; render(); }
 function lesHintToggle(){ les.hint=true; render(); }
 function lesStepsBar(){
-  const S=[['watch','1 Xem'],['chunks','2 Khuôn'],['speak','3 Nói'],['write','4 Viết'],['quiz','5 Quiz']];
+  const S=[['watch','1 Xem'],['chunks','2 Khuôn'],['speak','3 Nói'],['write','4 Viết'],['test','5 Thử'],['quiz','6 Quiz']];
   return `<div class="les-steps">${S.map(s=>`<button class="${les.step===s[0]?'on':''}" onclick="lesGo('${s[0]}')">${s[1]}</button>`).join('')}</div>`;
 }
 function renderLessons(){
@@ -4796,7 +4878,7 @@ function renderLessons(){
       <button class="btn-secondary" style="width:100%;margin-bottom:6px;" onclick="startEx4(${L.n})">🏆 Thi ${passed?'lại ':''}Cấp ${L.n}${L.n>1&&!open?' (thi thẳng để lên cấp)':''}</button>`; }).join('');
   const b0 = `<div class="les-grp">Cấp 0 · Nền tảng (như trẻ học) ${bsAllDone()?'· ✅':''}</div><p class="sc-vi" style="margin:0 2px 8px;">10 bước nhỏ, mỗi bước 3 phút: hiểu 1 điều → thử 3 câu → dùng với khách. Đã học ${BASICS.filter(m=>bsDone(m.id)).length}/${BASICS.length}.</p>${BASICS.map((m,i)=>`<button class="les-card ${bsDone(m.id)?'done':''}" onclick="startBasic(${i})"><div class="les-ic">${m.icon}</div><div class="les-t"><strong>${m.t}</strong><span>${m.s}</span></div><div class="les-ck">${bsDone(m.id)?'✓':'▶'}</div></button>`).join('')}`;
   return `${headerHtml(false)}<div class="pages"><button class="home-link" style="margin-bottom:12px;color:var(--navy);border-color:var(--navy);" onclick="goHome()">← Trang chủ</button>
-  <h2 class="intro-title">🗺️ Lộ trình ${LESSONS.length} bài</h2><p class="sc-vi">Mỗi bài ~20 phút, đủ 4 kỹ năng: xem cảnh (nghe) → học 4 khuôn → nói 4 bậc → nghe chép + viết → quiz. Học hết bài của cấp rồi thi: đạt cả 4 kỹ năng (≥80%) để mở cấp tiếp.</p>${b0}${blocks}</div>`;
+  <h2 class="intro-title">🗺️ Lộ trình ${LESSONS.length} bài</h2><p class="sc-vi">Mỗi bài ~20 phút, đủ 4 kỹ năng: xem cảnh (nghe) → học 4 khuôn → nói 4 bậc → nghe chép + viết → thử thách hội thoại 3 vòng → quiz. Học hết bài của cấp rồi thi: đạt cả 4 kỹ năng (≥80%) để mở cấp tiếp.</p>${b0}${blocks}</div>`;
 }
 function renderLesson(){
   const L = LESSONS[les.i];
@@ -4855,6 +4937,7 @@ function renderLesson(){
     ${fb}<div class="les-ctrl"><button class="btn-primary" onclick="lesMic(${o.k})">🎙️ Nói bằng tiếng Anh</button><button class="btn-secondary" onclick="lesHintToggle()">💡 Gợi ý</button><button class="btn-secondary" onclick="lesSpeakNext()">Câu tiếp →</button></div></div>`;
   }
   if(les.step==='write') return lesWriteHtml(head);
+  if(les.step==='test') return lesTestHtml(head);
   if(les.step==='quiz'){
     const q=les.qs[les.pos], ans=les.picked!==null;
     const opts=q.opts.map((o,k)=>{ let cls='sim-opt'; if(ans){ if(o.ok) cls+=' ok'; else if(k===les.picked) cls+=' no'; } return `<button class="${cls}" ${ans?'disabled':`onclick="lesPick(${k})"`}>${o.t}</button>`; }).join('');
@@ -6185,7 +6268,7 @@ function renderLoading(){
   return '<div class="loading">Đang mở sổ hộ chiếu...</div>';
 }
 
-const APP_VERSION = 'v66';
+const APP_VERSION = 'v67';
 function headerHtml(showHome){
   const strip = SKILL_ORDER.map(sk=>`<span class="visa-item">${svgIcon(SKILL_ICON[sk],14)}${SKILL_LABEL[sk]}</span>`).join('');
   return `
