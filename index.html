@@ -4707,6 +4707,13 @@ function lesTestInit(){
   les.t={i:les.i,pairs:pairs.slice(0,6),round:1,turn:0,tries:0,st:'ask',hint1:false,heard:'',pct:0,log:[[],[],[]],typed:false,listening:false,err:false,nosr:false,sum:false};
   setTimeout(lesTestSay,350);
 }
+function lesMixStart(){
+  stopLesson(); const pool=[];
+  LESSONS.forEach(L=>L.lines.forEach((x,k)=>{ if(x.w==='C'&&L.lines[k+1]&&L.lines[k+1].w==='Y') pool.push({c:x,y:L.lines[k+1],cl:L.client,yo:L.you}); }));
+  les={i:0,step:'test',token:0,sub:0,slow:false,pos:0,picked:null,right:0,spk:null,qs:null,rung:3,bld:null,hint:false,mix:true};
+  les.t={i:0,pairs:shuffleArr(pool).slice(0,8),round:3,turn:0,tries:0,st:'ask',hint1:false,heard:'',pct:0,log:[[],[],[]],typed:false,listening:false,err:false,nosr:false,sum:false,mix:true};
+  state.view='lesson'; render(); window.scrollTo(0,0); setTimeout(lesTestSay,400);
+}
 function lesTestSay(){ const T=les.t; if(!T||les.step!=='test'||T.sum) return; const p=T.pairs[T.turn]; if(p) speak(p.c.en); }
 function lesTestHint1(){ les.t.hint1=true; render(); }
 function lesTestType(){ les.t.typed=true; render(); }
@@ -4733,13 +4740,13 @@ function lesTestJudge(txt){
 }
 function lesTestNext(){
   const T=les.t; T.turn++; T.tries=0; T.st='ask'; T.hint1=false; T.heard=''; T.typed=false; T.err=false;
-  if(T.turn>=T.pairs.length){ T.sum=true; if(T.round>=3){ lesState.tst=lesState.tst||{}; const L=LESSONS[les.i]; lesState.tst[L.id]={d:localDay(),r:T.log.map(r=>Math.round(100*r.filter(x=>x==='clean').length/Math.max(1,T.pairs.length)))}; saveLessons(); sfx('win'); } }
+  if(T.turn>=T.pairs.length){ T.sum=true; if(T.round>=3 && T.mix){ sfx('win'); } else if(T.round>=3){ lesState.tst=lesState.tst||{}; const L=LESSONS[les.i]; lesState.tst[L.id]={d:localDay(),r:T.log.map(r=>Math.round(100*r.filter(x=>x==='clean').length/Math.max(1,T.pairs.length)))}; saveLessons(); sfx('win'); } }
   else setTimeout(lesTestSay,300);
   render(); window.scrollTo(0,0);
 }
 function lesTestRound(){ const T=les.t; T.round++; T.turn=0; T.tries=0; T.st='ask'; T.sum=false; T.hint1=false; T.typed=false; setTimeout(lesTestSay,350); render(); window.scrollTo(0,0); }
 function lesTestHtml(head){
-  if(!les.t || les.t.i!==les.i) lesTestInit();
+  if(!les.t || (!les.t.mix && les.t.i!==les.i)) lesTestInit();
   const T=les.t, L=LESSONS[les.i];
   if(!T.pairs.length){ lesGo('quiz'); return ''; }
   const R=T.round;
@@ -4748,27 +4755,28 @@ function lesTestHtml(head){
     const weak=T.pairs.filter((p,i)=>T.log[R-1][i]!=='clean');
     const weakH=weak.length?`<div class="les-k" style="margin:10px 0 4px;">CÂU CẦN NÓI LẠI CHO TRÔI</div>${weak.map(p=>`<div class="sc-card" style="margin-bottom:8px;"><div class="sc-alt" style="margin:0;">${listenSlowPair(p.y.en)}<div class="t"><strong>${p.y.en}</strong><i>${p.y.vi}</i></div></div><div class="lx-r">⚡ Thứ tự: ${lesOrderPieces(p.y.en).map((x,i)=>`${i+1}) ${x}`).join('  ')}</div></div>`).join('')}`:'';
     if(R<3) return head+`<div style="text-align:center;"><div style="font-size:2.6rem;">${clean>=N-1?'🏅':'💪'}</div><h2 class="intro-title" style="justify-content:center;">Xong ${LTEST_ROUNDS[R-1][0]}</h2><p>Đúng ngay lần đầu: <b>${clean}/${N}</b> · Đúng sau khi gợi ý: ${okc} · Chưa được: ${bad}</p></div>${weakH}<p class="sc-vi">Vòng sau khó hơn: ${LTEST_ROUNDS[R][1]}</p><button class="btn-primary" onclick="lesTestRound()">Sang ${LTEST_ROUNDS[R][0]} →</button></div>`;
+    if(T.mix){ const c3=T.log[2].filter(x=>x==='clean').length, o3=T.log[2].filter(x=>x==='ok').length; return head+`<div style="text-align:center;"><div style="font-size:3rem;">${c3>=N*0.8?'🏆':'💪'}</div><h2 class="intro-title" style="justify-content:center;">Xong giả lập khách thật</h2><p>Đáp đúng ngay lần đầu: <b>${c3}/${N}</b> · sau khi nói lại: ${o3}</p></div>${weakH}<button class="btn-primary" onclick="lesMixStart()">Chơi lại (câu khác)</button><button class="btn-secondary" onclick="goHome()">Về trang chủ</button></div>`; }
     const sc=T.log.map(r=>Math.round(100*r.filter(x=>x==='clean').length/N));
     return head+`<div style="text-align:center;"><div style="font-size:3rem;">${sc[2]>=80?'🏆':'💪'}</div><h2 class="intro-title" style="justify-content:center;">Xong 3 vòng!</h2></div>${[0,1,2].map(i=>`<div style="margin:8px 0;"><div style="display:flex;justify-content:space-between;font-weight:700;"><span>${LTEST_ROUNDS[i][0]}</span><span>${sc[i]}%</span></div><div style="background:#e6e9f8;border-radius:8px;height:12px;overflow:hidden;"><div style="width:${sc[i]}%;height:100%;background:${sc[i]>=80?'var(--green)':'var(--gold)'};"></div></div></div>`).join('')}<p class="sc-vi">% = số câu bạn đáp đúng ngay lần đầu, không cần gợi ý. Vòng 3 đạt từ 80% nghĩa là bạn đã sẵn sàng với khách thật. Chưa đạt thì làm lại bước này vào ngày mai.</p>${weakH}<button class="btn-primary" onclick="lesGo('quiz')">Sang quiz cuối bài →</button><button class="btn-secondary" onclick="lesTestInit();render()">Làm lại 3 vòng</button></div>`;
   }
   const p=T.pairs[T.turn], hideText=(R===3&&T.st==='ask'||R===3&&T.st==='hint');
   const showVi=(R===1)||T.st==='pass'||T.st==='fail';
-  const cbox=`<div class="sim-bubble"><div class="sc-vi">${L.client} nói:</div>${hideText?'<div style="font-size:1.1rem;">🎧 Bấm nghe để biết khách nói gì</div>':`<strong style="font-size:1.1rem;">${p.c.en}</strong>`}${showVi&&!hideText?`<div class="sc-vi">${p.c.vi}</div>`:''}<div style="margin-top:6px;"><span style="display:inline-flex;gap:6px;"><button class="phrase-play" onclick="speak(${JSON.stringify(p.c.en).replace(/"/g,'&quot;')})">${svgIcon('headphones',16)}</button><button class="phrase-play" onclick="speakSlow(${JSON.stringify(p.c.en).replace(/"/g,'&quot;')})">🐢</button></span></div></div>`;
-  const bar=`<div class="item-count">Thử thách · ${LTEST_ROUNDS[R-1][0]}/3 · lượt ${T.turn+1}/${T.pairs.length}</div><p class="sc-vi">${LTEST_ROUNDS[R-1][1]} Đạt từ ${LTEST_PASS}% là qua.</p>`;
-  const you=`<div class="sim-bubble me"><div class="sc-vi">${L.you} (bạn) đáp lại: <b>nội dung đang ẩn</b></div>${T.hint1&&T.st==='ask'?`<div style="margin-top:6px;">💡 Ý cần nói: <b>${p.y.vi}</b></div>`:''}</div>`;
+  const cbox=`<div class="sim-bubble"><div class="sc-vi">${p.cl||L.client} nói:</div>${hideText?'<div style="font-size:1.1rem;">🎧 Bấm nghe để biết khách nói gì</div>':`<strong style="font-size:1.1rem;">${p.c.en}</strong>`}${showVi&&!hideText?`<div class="sc-vi">${p.c.vi}</div>`:''}<div style="margin-top:6px;"><span style="display:inline-flex;gap:6px;"><button class="phrase-play" onclick="speak(${JSON.stringify(p.c.en).replace(/"/g,'&quot;')})">${svgIcon('headphones',16)}</button><button class="phrase-play" onclick="speakSlow(${JSON.stringify(p.c.en).replace(/"/g,'&quot;')})">🐢</button></span></div></div>`;
+  const bar=`<div class="item-count">Thử thách · ${LTEST_ROUNDS[R-1][0]}/3 · lượt ${T.turn+1}/${T.pairs.length}</div><p class="sc-vi">${LTEST_ROUNDS[R-1][1]} Đạt từ ${LTEST_PASS}% là qua.${R===3?' <b>Không gợi ý, không xem đáp án: nói cả câu rồi mới chấm.</b>':''}</p>`;
+  const you=`<div class="sim-bubble me"><div class="sc-vi">${p.yo||L.you} (bạn) đáp lại: <b>nội dung đang ẩn</b></div>${T.hint1&&T.st==='ask'?`<div style="margin-top:6px;">💡 Ý cần nói: <b>${p.y.vi}</b></div>`:''}</div>`;
   const pieces=`<div class="lx-r">⚡ <b>Nói theo thứ tự này:</b><br>${lesOrderPieces(p.y.en).map((x,i)=>`<span class="slot" style="margin:3px 4px 3px 0;display:inline-block;">${i+1}</span> ${x}`).join('<br>')}</div><div class="sc-vi" style="margin-top:6px;">Nghĩa: ${p.y.vi}</div>`;
   let fb='';
   if(T.listening) fb='<div class="feedback mid">🎙️ Đang nghe… hãy nói.</div>';
   else if(T.err) fb='<div class="feedback bad">Không nghe được. Bấm nói lại, hoặc gõ câu trả lời.</div>';
   else if(T.nosr) fb='<div class="feedback mid">Thiết bị này không nhận giọng nói. Hãy gõ câu trả lời.</div>';
-  if(T.st==='hint') fb+=`<div class="feedback bad">Chưa đủ khớp (${T.pct}%). Bạn nói: "${T.heard}"</div>${pieces}${listenSlowPair(p.y.en)}`;
+  if(T.st==='hint') fb+=R===3?`<div class="feedback bad">Chưa đủ khớp (${T.pct}%). Bạn nói: "${T.heard}"</div><p class="sc-vi">Vòng 3 không gợi ý. Hãy nói lại <b>cả câu</b>, đủ chủ ngữ + động từ + ý chính.</p>`:`<div class="feedback bad">Chưa đủ khớp (${T.pct}%). Bạn nói: "${T.heard}"</div>${pieces}${listenSlowPair(p.y.en)}`;
   if(T.st==='pass') fb=`<div class="feedback good">✓ Qua! (${T.pct}%) ${T.tries===1?'Đúng ngay lần đầu.':'Đúng sau khi gợi ý.'}</div><div class="sim-bubble"><div class="sc-vi">Câu mẫu:</div><strong>${p.y.en}</strong> ${listenSlowPair(p.y.en)}<div class="sc-vi">${p.y.vi}</div></div>`;
   if(T.st==='fail') fb=`<div class="feedback bad">Chưa qua (${T.pct}%). Bạn nói: "${T.heard}"</div>${pieces}${listenSlowPair(p.y.en)}<p class="sc-vi">Đọc to câu này 2 lần rồi bấm tiếp. Câu này sẽ quay lại ở vòng sau.</p>`;
   let ctrl='';
   if(T.st==='ask'||T.st==='hint'){
     ctrl = (T.typed||T.nosr)
       ? `<textarea id="tt-in" rows="2" style="width:100%;padding:10px;border-radius:12px;border:2px solid var(--navy);font-size:1.05rem;margin:8px 0;" placeholder="Gõ câu trả lời bằng tiếng Anh…" autocapitalize="off" spellcheck="false"></textarea><div class="les-ctrl"><button class="btn-primary" onclick="lesTestCheck()">Kiểm tra</button></div>`
-      : `<div class="les-ctrl"><button class="btn-primary" onclick="lesTestMic()">🎙️ ${T.st==='hint'?'Nói lại':'Nói câu trả lời'}</button><button class="btn-secondary" onclick="lesTestType()">⌨️ Gõ thay vì nói</button>${T.st==='ask'&&!T.hint1?'<button class="btn-secondary" onclick="lesTestHint1()">💡 Gợi ý ý nghĩa</button>':''}</div>`;
+      : `<div class="les-ctrl"><button class="btn-primary" onclick="lesTestMic()">🎙️ ${T.st==='hint'?'Nói lại':'Nói câu trả lời'}</button>${R===3?'':'<button class="btn-secondary" onclick="lesTestType()">⌨️ Gõ thay vì nói</button>'}${R<3&&T.st==='ask'&&!T.hint1?'<button class="btn-secondary" onclick="lesTestHint1()">💡 Gợi ý ý nghĩa</button>':''}</div>`;
   } else ctrl=`<button class="btn-primary" onclick="lesTestNext()">${T.turn+1>=T.pairs.length?'Xem kết quả vòng':'Lượt tiếp →'}</button>`;
   return head+bar+cbox+you+fb+ctrl+'</div>';
 }
@@ -4956,7 +4964,7 @@ function homeHeroHtml(){
   const B0 = !bsAllDone();
   const i = lesNextIdx(), L = LESSONS[i], tot=LESSONS.length, doneN = Object.keys(lesState.done).length, st = (typeof statsStreak==='function')?statsStreak():0;
   const lv = LEVELS.map(v=>`<div class="lv-pill ${lvUnlocked(v.n)?'':'lock'}"><b>${lvUnlocked(v.n)?'':'🔒 '}Cấp ${v.n}</b><span>${lvDone(v.n)}/${v.ids.length}</span></div>`).join('');
-  const tiles = [['🎯','Bắn bóng','startGame()'],['🧲','Từ đi kèm','openColloc()'],['🎧','Khách thật','openReal()'],['📚','Từ ngành','openGlossary()'],['🗣️','Nói lướt','openFast()']].map(t=>`<button class="h-tile" onclick="${t[2]}"><span>${t[0]}</span>${t[1]}</button>`).join('');
+  const tiles = [['🎯','Bắn bóng','startGame()'],['🧲','Từ đi kèm','openColloc()'],['🎧','Khách thật','openReal()'],['📚','Từ ngành','openGlossary()'],['🗣️','Nói lướt','openFast()'],['🤝','Giả lập khách','lesMixStart()']].map(t=>`<button class="h-tile" onclick="${t[2]}"><span>${t[0]}</span>${t[1]}</button>`).join('');
   return `${remindBarHtml()}<div class="hero47"><div class="hero-top"><div><div class="hero-k">${B0?'BƯỚC HÔM NAY · CẤP 0 NỀN TẢNG':'BÀI HÔM NAY · CẤP '+lvOf(L.id)}</div><div class="hero-t">${B0?BASICS[bsNextIdx()].icon+' '+BASICS[bsNextIdx()].t:L.icon+' '+L.title}</div><div class="hero-s">${B0?BASICS[bsNextIdx()].s+' · 3 phút':L.sub}</div></div><div class="hero-stat"><b>🔥 ${st}</b>ngày</div></div>
     <div class="les-stage mini">${lesSceneSvg(L.scene)}</div>
     ${B0?`<button class="btn-primary hero-go" onclick="startBasic(${bsNextIdx()})">▶ Học bước này (3 phút)</button><button class="btn-secondary" style="width:100%;margin-top:8px;" onclick="startLesson(${i})">Đã biết cơ bản? Vào thẳng Bài 1 →</button>`:`<button class="btn-primary hero-go" onclick="startLesson(${i})">▶ Học bài này (20 phút)</button>`}
@@ -6268,7 +6276,7 @@ function renderLoading(){
   return '<div class="loading">Đang mở sổ hộ chiếu...</div>';
 }
 
-const APP_VERSION = 'v67';
+const APP_VERSION = 'v68';
 function headerHtml(showHome){
   const strip = SKILL_ORDER.map(sk=>`<span class="visa-item">${svgIcon(SKILL_ICON[sk],14)}${SKILL_LABEL[sk]}</span>`).join('');
   return `
