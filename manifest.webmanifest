@@ -1,1 +1,19 @@
-{"name":"English Passport","short_name":"EnPassport","id":"./","start_url":"./index.html","scope":"./","display":"standalone","orientation":"portrait","background_color":"#1b2a49","theme_color":"#1b2a49","icons":[{"src":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMAAAADABAMAAACg8nE0AAAAGFBMVEX06tXVx7m4eGq1Qy+1Qy60Qy5eO0UbKknj2JOfAAAD+klEQVR42u2bv27cNhzHP2TqdEtIGUbH6pQXiP0EXbq0izt4Dzp47uZnaAukXZuhe4EO3rr2Cewn8EntVqSWmGyJC7IDpQt8UVCe8mOTANR0EHT68Mcv+fvHO3VG3ktTAAVQAAVQAAVQAAVQAP8L4KPZu+HXYec32c9NMuDm8YKhDk9OTeoU/bxoMsKTVA1+ccumO3yfCHBLBQ1pgJvlgPMkQL98TXZJgN+XA26SAG45ILwfruLDt6AACqAACuC9B1grkni94aqsAcLQ5gGoxkB1j66ya5dhivSRAfoOUA9qeYA6BDBj5rBvpAGquR1OGyMMiC90BBcDr1rJArQBwtrQt6gLB+haFLACwsUz6Dx8euWAShKgDYQLLB46LFcOVC0IWAFrMLTQo2CdbIJONeDaoQwOAsoQLlNNSAJYCB1ofEyha/AOrBigjjl9zQAwoIE21fq0Z0IHmLjPAopoQi0EsOABTYgARx2LDSsEmBzQlDxHf+FByQCUiUNXrwAmGqKMDGAcuplcXRQBB2KAYQ4wSAHMOOvbgJAkQhLgtgQbEeQA40xtAXAyALVZnmGrTExSeRfATDlqZHyRS+99vEXaokCupbYV8HsLaJTdjMo+A1SzFgHodRWDl25e3WsA1vW1jMj/uYTfChAWyL/bFHm7jk41uI1/jR+bTkbkwXfAnYd+0vTOw74DtBVdpoFMFU54o5QqRQO9wx5TW2vHiFmg5lePEbLgdpi5NfSADEC9BhgtkALEDMtthR4tZcG0jLYBNqlBmQbQcwAjBhgzrI0IUYIpHxPYB6MIW4A0CZIAQ3wsjKlirEOox3xMAODHamYUQcVc28x285e5ii4WZF3M1y0hlm1eLOj30QQfn67pogGtGCA42Ddj5aEJDnVI0hpKjQct0IDDjjPUJB/FpAG8A3UYy7+agX0zlm1iEa0F9NE9qDX88aBOP0tKBPjYh3JUK8KRme4IxuR+3MPKjPu5Fe4XhcupJI/vv3bSLTV/CfDn6ICuO8Sbgv7Cga9WNYSrLkdbM1xVK/oe+jZXY7bvrbrvhnydXxh2Pkot7f0CKIACKIAC4N39iGx2KDVA/7zuHdX9Vh5wcALw08HJix85+OKHjFOkswX9bwE+Yc+4rCIHTN5V9I/7KhegaZoVcL6XS4MTCN/BU2UyWTAMw9+A5ziTBdNvGc+/zOwq2r3MgBs+yzNFduzSBWdeZgGcAn/9Bpw/yuyun+7wrDqbdzkLr7MSMgugAAqgANjh9Cr5YPVdAGSLgRnA8XKATQLcXQ44TgKoxSLMfXNOg0dLAXcT98HHC01Q36RutK+XAU4T0xby/1UJdVKcXQEUQAEUQAEUQAEUwIcG+Bckli+vFrQ81AAAAABJRU5ErkJggg==","sizes":"192x192","type":"image/png","purpose":"any"},{"src":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAgAAAAIABAMAAAGVsnJAAAAGFBMVEX06tXcw7KqZ1u1Qy+1Qy60Qy55PT4bKkkx6cfwAAAL+UlEQVR42u3dv3PcuBUH8Af65PIM0onTXbjyzE3KOGlT5E+QC18t30ySOpX/hmviazOTOatOE/0HuSqlnTaZ8S7P1UUekUiaOFJCpNhdEiDA1WplPoLgdxtLq5V38dHDA8AfD+IFzfuREAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEz48ckdfvePSqsAmiCk+NXhv33vF4f+5vUfvv/wIYg/4od//+X9T9i7wMXvVDhxrP/2ihvg4lVYXfngz3MgwFVg7Se6OOMEuH4ZXjr/xzkjwDchDmh/5wO4UiEC6DMuAP2KgnxccAFcqzABDgqBQwACDYDDQiCJJwCI9DkLQB3uyqZgATgLF+CKA0CrcAEO+Gy3B7gOeXV/zgDwp5AB3jMAFCED1MMDaAr6oQYH+G/YAN8iAgAwMMB52ADXgwOosAE0TowAAADIAYgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAKC7F1C44yMVklIiqkiranYAIl00EEQZlZWaE4DR/M0jy0YiGAUga5qfF5TUDcFqHgDiWDZfviP6TG3/8lm6VDMYBYz204M6T4rE+6NoAZKfSfPC4+8+o7J9QjyWsQNkT8yBkEgX9md4vIgbILPatxn9lex9RWwAduvSzb+1oPEEWAESq23igf8ehCyPFUA8sb6VxfYrbYUAPZRxAohj2vPmDs7RkBEgk/0339g/EosYAZJO15ZGyQOd7n5tDACdBLAt9lCv5/+rzhyYLw2wAWR289/+df1FsVkK/e+1TbCIDcAO6vK1Wgd9rTYFGVL9djVKJ+ACWFh//hWJdQNXROX6c0gqrSDI4gIw+7ReKiLRJAJdbHOiNlfD3Zw
+{
+  "name": "English Passport · Tiếng Anh công việc",
+  "short_name": "English Passport",
+  "description": "Luyện nghe nói đọc viết tiếng Anh công việc: booth, sự kiện, văn phòng, bán lẻ.",
+  "id": "./",
+  "start_url": "./?source=pwa",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#1d2b64",
+  "theme_color": "#1d2b64",
+  "lang": "vi",
+  "categories": ["education", "business"],
+  "icons": [
+    {"src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any"},
+    {"src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any"},
+    {"src": "icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}
+  ]
+}
